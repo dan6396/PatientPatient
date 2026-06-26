@@ -1,0 +1,26 @@
+# Secrets — never commit
+.env
+.env.local
+credentials.json
+token.json
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+
+# Scratch space — disposable
+.tmp/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# OS
+.DS_Store
+.vercel
+.env*
