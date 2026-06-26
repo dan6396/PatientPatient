@@ -1,0 +1,53 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #d6d6cf;
+  --bg-warm: #d9d8d0;
+  --ink: #16160f;
+  --ink-soft: #4a4a40;
+}
+
+@theme inline {
+  --font-serif: var(--font-instrument), Georgia, "Times New Roman", serif;
+  --font-sans: var(--font-inter), -apple-system, "Apple SD Gothic Neo",
+    "Pretendard", system-ui, sans-serif;
+
+  --color-bg: #d6d6cf;
+  --color-ink: #16160f;
+  --color-ink-soft: #4a4a40;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+.font-display {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+/* Film grain overlay — fixed, on top of everything, non-interactive */
+.grain {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0.5;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
+}
+
+::selection {
+  background: #16160f;
+  color: #d6d6cf;
+}
