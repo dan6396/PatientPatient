@@ -1,14 +1,14 @@
 "use client";
 
-const NAV = [
-  { label: "면담", href: "#start" },
-  { label: "채점", href: "#evaluate" },
-  { label: "증례", href: "#cases" },
-  { label: "소개", href: "#about" },
-  { label: "문의", href: "#contact" },
-];
+import type { NavItem } from "./config";
 
-export default function Navbar() {
+export default function Navbar({
+  brand,
+  items,
+}: {
+  brand: string;
+  items: NavItem[];
+}) {
   return (
     <header className="pointer-events-none fixed inset-x-0 top-4 z-50 flex items-center justify-between px-4 sm:px-6">
       {/* 좌측 모서리 아이콘 */}
@@ -23,12 +23,12 @@ export default function Navbar() {
 
       {/* 중앙 알약형 내비 */}
       <nav className="pointer-events-auto flex items-center gap-1 rounded-full bg-ink px-2.5 py-2 text-[var(--bg)] shadow-lg shadow-black/10">
-        <a href="#top" className="px-3 font-display text-lg leading-none tracking-tight">
-          CODE&nbsp;Medi
+        <a href="#top" className="whitespace-nowrap px-3 font-display text-lg leading-none tracking-tight">
+          {brand}
         </a>
         <span className="mx-1 hidden h-4 w-px bg-white/15 sm:block" />
         <ul className="hidden items-center sm:flex">
-          {NAV.map((n) => (
+          {items.map((n) => (
             <li key={n.label}>
               <a
                 href={n.href}
