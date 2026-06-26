@@ -1,26 +1,56 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import type { CtaItem } from "./config";
 
 type Particle = {
   x: number;
   y: number;
-  hx: number; // home x
-  hy: number; // home y
+  hx: number;
+  hy: number;
   vx: number;
   vy: number;
   size: number;
-  rx: number; // random scatter direction
+  rx: number;
   ry: number;
 };
 
+type HeroProps = {
+  eyebrow: { pre?: string; strong?: string; post?: string };
+  particleWord: string;
+  caption: string;
+  captionSub?: string;
+  body: string;
+  primaryCta: CtaItem;
+  secondaryCta?: CtaItem;
+  scrollHint?: string;
+  inkColor: string; // 입자 색 (hex)
+};
+
+function hexToRgb(hex: string): [number, number, number] {
+  let h = hex.replace("#", "").trim();
+  if (h.length === 3) h = h.split("").map((c) => c + c).join("");
+  const n = parseInt(h, 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+
 /**
- * 입자가 흩어졌다 모이며 "CPX"를 그리는 인터랙티브 히어로.
+ * 입자가 흩어졌다 모이며 particleWord 를 그리는 인터랙티브 히어로.
  * - 마우스를 움직이면 커서 주변 입자가 밀려났다가 제자리로 돌아온다.
  * - 휠로 스크롤하면 입자가 위로 흩어지며 사라진다(scatter).
  * - 마우스 위치에 따라 전체 입자장이 미세하게 패럴랙스로 움직인다.
  */
-export default function ParticleHero() {
+export default function ParticleHero({
+  eyebrow,
+  particleWord,
+  caption,
+  captionSub,
+  body,
+  primaryCta,
+  secondaryCta,
+  scrollHint,
+  inkColor,
+}: HeroProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
 
@@ -31,6 +61,7 @@ export default function ParticleHero() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
+    const [pr, pg, pb] = hexToRgb(inkColor);
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     let w = 0;
     let h = 0;
@@ -38,9 +69,8 @@ export default function ParticleHero() {
     let raf = 0;
 
     const mouse = { x: -9999, y: -9999, active: false };
-    // 부드러운 패럴랙스용 (목표 / 현재)
     const par = { tx: 0, ty: 0, x: 0, y: 0 };
-    let scatter = 0; // 0(모임) ~ 1(흩어짐), 스크롤로 제어
+    let scatter = 0;
 
     function buildParticles() {
       const off = document.createElement("canvas");
@@ -54,12 +84,12 @@ export default function ParticleHero() {
       octx.textAlign = "center";
       octx.textBaseline = "middle";
 
-      // "CPX" 한 단어만 입자로 — 부제는 또렷한 HTML 텍스트로 따로 표시
-      const big = Math.min(w * 0.27, 280);
+      // ~1440px 이하는 280(현재값) 유지, 그 이상 넓어지면 비례해 커진다.
+      const big = Math.min(w * 0.27, 280 + Math.max(0, w - 1440) * 0.14);
       const cx = w / 2;
       const cy = h / 2 - big * 0.08;
       octx.font = `700 ${big}px Georgia, "Times New Roman", serif`;
-      octx.fillText("CPX", cx, cy);
+      octx.fillText(particleWord, cx, cy);
 
       const data = octx.getImageData(0, 0, w, h).data;
       const step = w < 640 ? 4 : 5;
@@ -104,7 +134,6 @@ export default function ParticleHero() {
     }
 
     function tick() {
-      // 패럴랙스 부드럽게 추적
       par.x += (par.tx - par.x) * 0.06;
       par.y += (par.ty - par.y) * 0.06;
 
@@ -144,7 +173,7 @@ export default function ParticleHero() {
       }
 
       const alpha = Math.max(0, 1 - scatter * 0.95);
-      ctx!.fillStyle = `rgba(22,22,15,${alpha})`;
+      ctx!.fillStyle = `rgba(${pr},${pg},${pb},${alpha})`;
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i];
         ctx!.fillRect(p.x, p.y, p.size, p.size);
@@ -185,7 +214,7 @@ export default function ParticleHero() {
       wrap.removeEventListener("mousemove", onMove);
       wrap.removeEventListener("mouseleave", onLeave);
     };
-  }, []);
+  }, [particleWord, inkColor]);
 
   return (
     <section
@@ -194,44 +223,48 @@ export default function ParticleHero() {
     >
       <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" />
 
-      {/* CPX 부제 — 또렷한 텍스트 (입자 X) */}
-      <div className="pointer-events-none absolute left-1/2 top-[59%] -translate-x-1/2 text-center">
+      {/* 또렷한 부제 (입자 X) */}
+      <div className="pointer-events-none absolute left-1/2 top-[59%] -translate-x-1/2 px-4 text-center">
         <p className="font-display text-base tracking-[0.32em] text-ink/70 sm:text-lg">
-          CLINICAL&nbsp;&nbsp;PERFORMANCE&nbsp;&nbsp;EXAMINATION
+          {caption}
         </p>
-        <p className="mt-1 text-xs tracking-[0.2em] text-ink-soft/70">임상수행평가</p>
+        {captionSub && (
+          <p className="mt-1 text-xs tracking-[0.2em] text-ink-soft/70">{captionSub}</p>
+        )}
       </div>
 
-      {/* 팀 라벨 — 레퍼런스의 'Curated' 위치 */}
+      {/* 좌상단(중앙 상단) 이탤릭 라벨 */}
       <span className="pointer-events-none absolute left-1/2 top-[13%] -translate-x-1/2 text-center font-display text-base italic text-ink-soft/80">
-        team <span className="text-ink">patient</span>patient
+        {eyebrow.pre}
+        {eyebrow.strong && <span className="text-ink">{eyebrow.strong}</span>}
+        {eyebrow.post}
         <span className="mx-auto mt-1 block h-5 w-px rotate-[20deg] bg-ink/30" />
       </span>
 
       {/* 하단 카피 + CTA */}
       <div className="pointer-events-none absolute inset-x-0 bottom-[8%] flex flex-col items-center gap-5 px-6 text-center">
-        <p className="max-w-xl text-[15px] leading-relaxed text-ink-soft">
-          표준화환자(SP)와의 면담을 연습하고,
-          <br className="hidden sm:block" /> CPX 채점표 기준으로{" "}
-          <em className="font-display not-italic text-ink">즉시 피드백</em>을 받으세요.
-        </p>
+        <p className="max-w-xl text-[0.9375rem] leading-relaxed text-ink-soft">{body}</p>
         <div className="pointer-events-auto flex items-center gap-3">
           <a
-            href="/session"
+            href={primaryCta.href}
             className="rounded-full bg-ink px-6 py-2.5 text-sm font-medium text-[var(--bg)] transition-transform hover:-translate-y-0.5"
           >
-            면담 시작하기
+            {primaryCta.label}
           </a>
-          <a
-            href="#about"
-            className="rounded-full border border-ink/25 px-6 py-2.5 text-sm font-medium text-ink/80 transition-colors hover:bg-ink/5"
-          >
-            어떻게 동작하나요
-          </a>
+          {secondaryCta && (
+            <a
+              href={secondaryCta.href}
+              className="rounded-full border border-ink/25 px-6 py-2.5 text-sm font-medium text-ink/80 transition-colors hover:bg-ink/5"
+            >
+              {secondaryCta.label}
+            </a>
+          )}
         </div>
-        <span className="mt-2 animate-pulse text-xs tracking-[0.25em] text-ink-soft/60">
-          SCROLL ↓
-        </span>
+        {scrollHint && (
+          <span className="mt-2 animate-pulse text-xs tracking-[0.25em] text-ink-soft/60">
+            {scrollHint}
+          </span>
+        )}
       </div>
     </section>
   );

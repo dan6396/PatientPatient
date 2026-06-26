@@ -19,6 +19,9 @@
 
 html {
   scroll-behavior: smooth;
+  /* 큰 화면에서 전체(rem 기반 크기)가 비례해 커지도록.
+     ~1440px 이하는 16px 그대로(=14" 환경 불변), 그 이상에서만 최대 21px까지 증가. */
+  font-size: clamp(16px, 9.6px + 0.45vw, 21px);
 }
 
 body {
