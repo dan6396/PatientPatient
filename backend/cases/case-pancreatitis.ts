@@ -84,4 +84,77 @@ export const pancreatitisCase: PatientCase = {
     // ── 신체진찰태도 (1 × 4점) ──
     { id: "att1", category: "신체진찰태도", description: "신체진찰 태도가 좋았다(손 위생·가려주기·사전설명)", levels: ppi },
   ],
+
+  physicalExam: [
+    { rubricId: "px1", label: "진찰 전 손을 씻는다", region: "handR", effect: "wave", finding: "정상", resultText: "손을 깨끗이 씻고 진찰을 시작합니다." },
+    { rubricId: "px2", label: "복부 청진을 먼저 시행한다", region: "upperAbdomen", effect: "wave", finding: "정상", resultText: "장음을 청진합니다. 장음은 정상입니다." },
+    { rubricId: "px3", label: "환자의 자세를 바르게 한다", region: "fullBody", effect: "press", finding: "정상", resultText: "무릎을 살짝 굽히게 해 복부 긴장을 풀어줍니다." },
+    { rubricId: "px4", label: "통증 없는 부위부터 촉진한다", region: "lowerAbdomenR", effect: "press", finding: "정상", resultText: "통증이 없는 우하복부부터 부드럽게 촉진합니다. 특이 소견 없습니다." },
+    { rubricId: "px5", label: "상복부를 누르며 호흡 시 통증을 확인한다", region: "upperAbdomen", effect: "press", finding: "양성", resultText: "상복부에 심한 압통! 숨을 들이쉴 때 통증이 더 심해진다고 호소합니다." },
+  ],
+
+  teaching: {
+    impression: "급성 췌장염",
+    sections: [
+      {
+        key: "hx",
+        title: "근거 — 문진",
+        items: [
+          "과음 후 발생한 급성 상복부 통증",
+          "등으로 퍼지는 방사통",
+          "발열·오한 동반",
+          "지속적이고 점점 심해지는 경련성 통증",
+          "오심·식욕저하",
+          "잦은 과음력(위험인자)",
+        ],
+      },
+      {
+        key: "px",
+        title: "근거 — 신체진찰",
+        items: ["상복부 압통", "흡기 시 통증 악화", "장음 감소 가능"],
+      },
+      {
+        key: "ddx",
+        title: "감별진단",
+        items: ["급성 담낭염", "위십이지장 궤양", "급성 간염", "소장폐쇄"],
+      },
+      {
+        key: "wu",
+        title: "검사",
+        items: ["혈청 아밀라아제·리파아제", "복부 CT", "복부 초음파", "간기능검사·전해질"],
+      },
+      {
+        key: "tx",
+        title: "치료",
+        items: ["금식 및 수액 요법", "진통제", "원인 교정(금주)", "중증도 평가 후 입원"],
+      },
+      {
+        key: "edu-disease",
+        title: "교육 — 질환 설명",
+        items: ["췌장에 염증이 생긴 상태로, 과도한 음주가 흔한 원인임을 설명한다."],
+      },
+      {
+        key: "edu-emergency",
+        title: "교육 — 응급",
+        items: ["복통이 심해지거나 고열·호흡곤란이 생기면 즉시 내원하도록 교육한다."],
+      },
+      {
+        key: "edu-life",
+        title: "교육 — 생활습관(금주·식이)",
+        items: [
+          "치료 기간 및 이후 반드시 금주하도록 교육한다.",
+          "회복기에는 저지방 식이로 소량씩 규칙적으로 식사하도록 권고한다.",
+          "금연을 권고한다.",
+        ],
+      },
+      {
+        key: "edu-prog",
+        title: "교육 — 예후",
+        items: [
+          "대부분 보존적 치료로 호전되나 중증 췌장염은 합병증 위험이 있어 입원 관찰이 필요함을 설명한다.",
+          "재발 방지를 위해 금주가 핵심임을 강조한다.",
+        ],
+      },
+    ],
+  },
 };

@@ -85,4 +85,101 @@ export const tiaCase: PatientCase = {
     // ── 신체진찰태도 (1 × 4점) ──
     { id: "att1", category: "신체진찰태도", description: "신체진찰 태도가 좋았다(손 위생·가려주기·사전설명)", levels: ppi },
   ],
+
+  physicalExam: [
+    { rubricId: "px1", label: "발음을 시켜 구음장애를 확인한다", region: "mouth", effect: "wave", finding: "정상", resultText: "‘프프프, 라라라, 크크크’ 발음을 확인합니다. 발음은 또렷합니다." },
+    {
+      rubricId: "px2", label: "근력(MRC)을 평가한다", region: "armL", effect: "droop", finding: "양성",
+      resultText: "왼쪽 팔다리를 들어보게 합니다. 지금은 회복되어 근력은 대체로 정상이나 약간 처지는 느낌이 있습니다.",
+      followup: { prompt: "어디를 평가했나요?", options: [{ label: "양쪽 팔·다리 모두", level: 0 }, { label: "한쪽 또는 일부만", level: 1 }] },
+    },
+    { rubricId: "px3", label: "상하좌우 안구운동을 확인한다", region: "eyes", effect: "eye", finding: "정상", resultText: "타겟을 상·하·좌·우로 따라보게 합니다. 안구운동 정상입니다." },
+    { rubricId: "px4", label: "촉각감각을 평가한다", region: "armR", effect: "press", finding: "정상", resultText: "양측 팔다리의 촉각을 비교합니다. 좌우 차이 없습니다." },
+    { rubricId: "px5", label: "통각 및 온도감각을 평가한다", region: "armL", effect: "wave", finding: "정상", resultText: "날카로운 자극과 온도감각을 양측에서 확인합니다. 정상입니다." },
+    { rubricId: "px6", label: "진동감각·위치감각을 평가한다", region: "handL", effect: "press", finding: "정상", resultText: "소리굽쇠와 관절 위치 감각을 확인합니다. 정상입니다." },
+    {
+      rubricId: "px7", label: "사지 건반사를 검사한다", region: "legL", effect: "jerk", finding: "정상",
+      resultText: "이두·삼두·슬개·발목 건반사를 양측에서 두드려 비교합니다.",
+      followup: { prompt: "어디를 검사했나요?", options: [{ label: "양측 모두 비교", level: 0 }, { label: "한쪽 또는 일부만", level: 1 }] },
+    },
+    { rubricId: "px8", label: "바빈스키 징후를 확인한다", region: "footL", effect: "fan", finding: "정상", resultText: "양 발바닥을 자극합니다. 바빈스키 음성입니다." },
+    { rubricId: "px9", label: "호프만 징후를 확인한다", region: "handL", effect: "jerk", finding: "정상", resultText: "가운뎃손가락을 튕겨 확인합니다. 호프만 음성입니다." },
+    { rubricId: "px10", label: "발목 클로누스를 확인한다", region: "footL", effect: "jerk", finding: "정상", resultText: "발목을 갑자기 굽혀 확인합니다. 클로누스 없습니다." },
+  ],
+
+  teaching: {
+    impression: "일과성 뇌허혈 발작(TIA)",
+    sections: [
+      {
+        key: "hx",
+        title: "근거 — 문진",
+        items: [
+          "갑자기 발생한 일측(좌측) 팔다리 위약",
+          "수 분~십여 분 내 완전히 회복",
+          "이전에도 짧은 위약 삽화가 반복됨",
+          "고혈압·고지혈증 과거력",
+          "뇌졸중 위험인자/가족력",
+        ],
+      },
+      {
+        key: "px",
+        title: "근거 — 신체진찰",
+        items: [
+          "내원 시 신경학적 결손이 회복된 상태",
+          "근력·감각·반사 좌우 비교 정상화",
+          "병적반사(바빈스키 등) 음성",
+        ],
+      },
+      {
+        key: "ddx",
+        title: "감별진단",
+        items: ["뇌졸중(뇌경색)", "뇌종양", "경추척수병증", "말초신경병증"],
+      },
+      {
+        key: "wu",
+        title: "검사",
+        items: [
+          "뇌 CT/MRI(확산강조영상)",
+          "경동맥 초음파·뇌혈관 영상",
+          "심전도·심장초음파(색전원 평가)",
+          "혈당·지질·응고검사",
+        ],
+      },
+      {
+        key: "tx",
+        title: "치료",
+        items: [
+          "항혈소판제(아스피린 등) 시작",
+          "고혈압·고지혈증 등 위험인자 관리",
+          "필요 시 항응고/경동맥 시술 고려",
+        ],
+      },
+      {
+        key: "edu-disease",
+        title: "교육 — 질환 설명",
+        items: ["뇌로 가는 혈류가 일시적으로 막혔다 풀린 상태로, 뇌졸중의 강력한 경고 신호임을 설명한다."],
+      },
+      {
+        key: "edu-emergency",
+        title: "교육 — 응급",
+        items: ["편측 위약·언어장애·시야장애가 다시 생기면 즉시 응급실로 오도록 교육한다(골든타임)."],
+      },
+      {
+        key: "edu-life",
+        title: "교육 — 생활습관",
+        items: [
+          "금연·절주, 저염·저지방 식이, 규칙적 운동을 권고한다.",
+          "혈압·혈당·콜레스테롤 약을 꾸준히 복용하도록 교육한다.",
+        ],
+      },
+      {
+        key: "edu-prog",
+        title: "교육 — 예후",
+        items: [
+          "TIA 후 단기간 내 뇌졸중 위험이 높아 적극적 예방치료가 필요함을 설명한다.",
+          "위험인자 관리로 뇌졸중을 상당 부분 예방할 수 있음을 안내한다.",
+        ],
+      },
+    ],
+  },
 };

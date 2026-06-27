@@ -2,11 +2,11 @@
 
 import { useState } from "react";
 import CasePicker from "./CasePicker";
-import Chat from "./Chat";
+import Encounter from "./Encounter";
 
 export default function Session() {
   const [caseId, setCaseId] = useState<string | null>(null);
 
   if (!caseId) return <CasePicker onSelect={setCaseId} />;
-  return <Chat caseId={caseId} onExit={() => setCaseId(null)} />;
+  return <Encounter caseId={caseId} onExit={() => setCaseId(null)} />;
 }

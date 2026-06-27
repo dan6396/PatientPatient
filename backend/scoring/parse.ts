@@ -1,7 +1,13 @@
-// 채점 LLM 응답을 안전하게 JSON으로 파싱한다. (마크다운 펜스 제거, 객체 경계 추출)
+// 채점 LLM 응답을 안전하게 JSON으로 파싱한다.
 
 export type RawScore = { id: string; level: number; evidence: string };
-export type ParsedScore = { items: RawScore[]; summary: string };
+export type ParsedScore = {
+  items: RawScore[];
+  summary: string;
+  studentImpression: string;
+  impressionCorrect: boolean;
+  covered: string[];
+};
 
 export function parseScoreResponse(raw: string): ParsedScore {
   let text = raw.trim();
@@ -20,10 +26,15 @@ export function parseScoreResponse(raw: string): ParsedScore {
     throw new Error("채점 응답을 JSON으로 해석하지 못했습니다.");
   }
 
-  const obj = data as { items?: unknown; summary?: unknown };
-  const rawItems = Array.isArray(obj.items) ? obj.items : [];
+  const obj = data as {
+    items?: unknown;
+    summary?: unknown;
+    studentImpression?: unknown;
+    impressionCorrect?: unknown;
+    covered?: unknown;
+  };
 
-  const items: RawScore[] = rawItems
+  const items: RawScore[] = (Array.isArray(obj.items) ? obj.items : [])
     .map((it) => {
       const o = it as Record<string, unknown>;
       if (typeof o.id !== "string") return null;
@@ -36,8 +47,16 @@ export function parseScoreResponse(raw: string): ParsedScore {
     })
     .filter((x): x is RawScore => x !== null);
 
+  const covered = Array.isArray(obj.covered)
+    ? obj.covered.filter((c): c is string => typeof c === "string")
+    : [];
+
   return {
     items,
     summary: typeof obj.summary === "string" ? obj.summary : "",
+    studentImpression:
+      typeof obj.studentImpression === "string" ? obj.studentImpression : "",
+    impressionCorrect: obj.impressionCorrect === true,
+    covered,
   };
 }

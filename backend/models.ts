@@ -21,7 +21,13 @@ export const STT_MODEL = process.env.STT_MODEL ?? "whisper-1";
 // STT 정확도용 힌트(도메인 용어 bias)
 export const STT_PROMPT =
   "의사와 환자의 한국어 진료 면담입니다. 배, 복통, 명치, 압통, 메스꺼움, 구토, 발열, 오한, 설사, 변비, 월경, 식욕 같은 의료 용어가 자주 나옵니다.";
-export const TTS_MODEL = process.env.TTS_MODEL ?? "tts-1";
-// 업그레이드 옵션: "gpt-4o-mini-tts"
-export const TTS_VOICE = process.env.TTS_VOICE ?? "alloy";
-// 한국어 음질이 아쉬우면 /api/tts 의 provider 함수만 ElevenLabs/Cartesia로 교체.
+// gpt-4o-mini-tts: instructions(나이대·말투 지시)를 지원 → 환자 페르소나에 맞춤.
+// 비용/속도가 부담되면 "tts-1" 로 내릴 수 있음(이 경우 instructions는 무시됨).
+export const TTS_MODEL = process.env.TTS_MODEL ?? "gpt-4o-mini-tts";
+export const TTS_VOICE = process.env.TTS_VOICE ?? "alloy"; // 폴백
+
+// 환자 성별·나이에 맞는 보이스 선택
+export function pickVoice(sex: "남" | "여", age: number): string {
+  if (sex === "여") return age >= 45 ? "shimmer" : "nova"; // 중년/젊은 여성
+  return age <= 30 ? "echo" : "onyx"; // 젊은/중년 남성
+}

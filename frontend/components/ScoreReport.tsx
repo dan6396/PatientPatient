@@ -20,12 +20,18 @@ function Mark({ item }: { item: ScoredItem }) {
   );
 }
 
+type Turn = { role: "doctor" | "patient"; content: string };
+
 export default function ScoreReport({
   report,
+  transcript = [],
+  patientMood,
   onRestart,
   onExit,
 }: {
   report: ScoreResponse;
+  transcript?: Turn[];
+  patientMood?: string;
   onRestart: () => void;
   onExit: () => void;
 }) {
@@ -44,11 +50,43 @@ export default function ScoreReport({
   );
 
   return (
-    <div className="mx-auto w-full max-w-2xl">
+    <div className="mx-auto w-full max-w-5xl lg:flex lg:items-start lg:gap-8">
+      {/* 대화 내역 */}
+      <aside className="mb-8 lg:mb-0 lg:sticky lg:top-6 lg:w-[36%] lg:shrink-0">
+        <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.15em] text-ink-soft">
+          대화 내역
+        </h3>
+        <div className="max-h-[38vh] space-y-2 overflow-y-auto rounded-xl border border-ink/10 bg-[var(--bg)]/40 p-3 lg:max-h-[82vh]">
+          {transcript.filter((t) => t.content.trim()).map((t, i) => (
+            <div key={i} className={`flex ${t.role === "doctor" ? "justify-end" : "justify-start"}`}>
+              <div
+                className={`max-w-[85%] rounded-2xl px-3 py-2 text-[13px] leading-relaxed ${
+                  t.role === "doctor"
+                    ? "bg-ink text-[var(--bg)]"
+                    : "border border-ink/10 bg-[var(--bg)]/70 text-ink"
+                }`}
+              >
+                {t.content}
+              </div>
+            </div>
+          ))}
+          {transcript.filter((t) => t.content.trim()).length === 0 && (
+            <p className="py-4 text-center text-xs text-ink-soft/70">대화 내역이 없습니다.</p>
+          )}
+        </div>
+      </aside>
+
+      {/* 채점 */}
+      <div className="min-w-0 lg:flex-1">
       <div className="mb-6 flex items-end justify-between">
         <div>
           <h2 className="font-display text-4xl text-ink">채점 결과</h2>
           <p className="mt-1 text-sm text-ink-soft">CPX 채점표 기준 자동 평가</p>
+          {patientMood && (
+            <p className="mt-1 text-xs text-ink-soft">
+              이번 환자 상태: <span className="font-medium text-ink">{patientMood}</span>
+            </p>
+          )}
         </div>
         <div className="text-right">
           <div className="font-display text-4xl text-ink">
@@ -58,6 +96,54 @@ export default function ScoreReport({
           <p className="text-xs text-ink-soft">{report.percentage}점 (100점 환산)</p>
         </div>
       </div>
+
+      {/* 교육 피드백 카드 (놓친 항목 = 빨강) */}
+      {report.teaching && (
+        <div className="mb-6 rounded-xl border border-ink/15 bg-ink/[0.04] p-5">
+          <div className="mb-3 flex items-center justify-between">
+            <h3 className="font-display text-xl text-ink">교육 피드백</h3>
+            <span className="text-xs text-red-600">빨강 = 놓친 항목 · 보충 공부</span>
+          </div>
+
+          <div className="mb-3 text-sm">
+            <span className="text-ink-soft">추정진단(Impression): </span>
+            <span className="font-medium text-ink">{report.teaching.impression}</span>
+            {report.teaching.impressionCorrect ? (
+              <span className="ml-2 text-emerald-700">✓ 응시자 진단 일치</span>
+            ) : (
+              <span className="ml-2 text-red-600">
+                · 응시자: {report.teaching.studentImpression || "언급 없음"}
+              </span>
+            )}
+          </div>
+
+          {report.summary && (
+            <p className="mb-4 text-sm leading-relaxed text-ink-soft">{report.summary}</p>
+          )}
+
+          <div className="space-y-3">
+            {report.teaching.sections.map((s) => (
+              <div key={s.title}>
+                <h4 className="text-xs font-semibold uppercase tracking-[0.1em] text-ink-soft">
+                  {s.title}
+                </h4>
+                <ul className="mt-1 space-y-0.5">
+                  {s.items.map((it, i) => (
+                    <li
+                      key={i}
+                      className={`text-sm leading-relaxed ${
+                        it.covered ? "text-ink" : "font-medium text-red-600"
+                      }`}
+                    >
+                      <span className="text-ink-soft/40">·</span> {it.text}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* 카테고리별 소계 */}
       <div className="mb-6 flex flex-wrap gap-2">
@@ -105,7 +191,7 @@ export default function ScoreReport({
         ))}
       </div>
 
-      {report.summary && (
+      {!report.teaching && report.summary && (
         <div className="mt-8 rounded-xl border border-ink/15 bg-ink/[0.04] p-5">
           <h3 className="mb-2 font-display text-lg text-ink">피드백</h3>
           <p className="text-sm leading-relaxed text-ink-soft">{report.summary}</p>
@@ -125,6 +211,7 @@ export default function ScoreReport({
         >
           다른 증례 선택
         </button>
+      </div>
       </div>
     </div>
   );
