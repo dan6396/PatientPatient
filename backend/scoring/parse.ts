@@ -1,15 +1,12 @@
-// 채점 LLM의 텍스트 응답을 안전하게 JSON으로 파싱한다.
-// 마크다운 코드펜스 제거, 객체 경계 추출 등 방어적으로 처리.
+// 채점 LLM 응답을 안전하게 JSON으로 파싱한다. (마크다운 펜스 제거, 객체 경계 추출)
 
-import type { ScoreResponse, ScoreResult } from "../cases/case-types";
+export type RawScore = { id: string; level: number; evidence: string };
+export type ParsedScore = { items: RawScore[]; summary: string };
 
-export function parseScoreResponse(raw: string): ScoreResponse {
+export function parseScoreResponse(raw: string): ParsedScore {
   let text = raw.trim();
-
-  // ```json ... ``` 같은 코드펜스 제거
   text = text.replace(/^```(?:json)?/i, "").replace(/```$/i, "").trim();
 
-  // 본문 중 첫 '{' ~ 마지막 '}' 만 추출 (앞뒤 잡설 방어)
   const start = text.indexOf("{");
   const end = text.lastIndexOf("}");
   if (start !== -1 && end !== -1 && end > start) {
@@ -26,17 +23,18 @@ export function parseScoreResponse(raw: string): ScoreResponse {
   const obj = data as { items?: unknown; summary?: unknown };
   const rawItems = Array.isArray(obj.items) ? obj.items : [];
 
-  const items: ScoreResult[] = rawItems
+  const items: RawScore[] = rawItems
     .map((it) => {
       const o = it as Record<string, unknown>;
       if (typeof o.id !== "string") return null;
+      const lvl = Number(o.level);
       return {
         id: o.id,
-        met: o.met === true,
+        level: Number.isFinite(lvl) ? Math.round(lvl) : 0,
         evidence: typeof o.evidence === "string" ? o.evidence : "",
-      } as ScoreResult;
+      } as RawScore;
     })
-    .filter((x): x is ScoreResult => x !== null);
+    .filter((x): x is RawScore => x !== null);
 
   return {
     items,

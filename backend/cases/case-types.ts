@@ -1,44 +1,63 @@
-// CPX 증례 데이터 모델.
-// ★ 코드는 이 타입만 알고 동작한다. 실제 증례 내용은 seed-case.ts 같은 데이터 파일에만 존재한다.
-
-export type RubricItem = {
-  id: string;
-  category: "병력청취" | "신체진찰" | "환자교육" | "PPI" | "임상예절";
-  description: string; // 예: "복통의 발현 양상(언제부터/어떻게)을 물었다"
-};
+// CPX 증례 + (가중치·다단계) 채점표 데이터 모델.
+// 코드는 이 타입만 알고 동작한다. 실제 증례/채점 내용은 case-*.ts 데이터 파일에만 있다.
 
 export type GatedFact = {
   id: string;
-  triggerHint: string; // 이 정보가 드러나려면 의사가 무엇을 물어야 하는지 (예: "통증 위치를 물으면")
+  triggerHint: string; // 이 정보가 드러나려면 의사가 무엇을 물어야 하는지
   answer: string; // 그때 환자가 하는 대답
+};
+
+// 채점 레벨 하나 (높은 점수 → 낮은 점수 순으로 나열한다)
+export type RubricLevel = {
+  label: string; // 예: "예", "제대로 함", "우수", "아주 우수"
+  points: number;
+};
+
+export type RubricItem = {
+  id: string;
+  category: string; // "병력청취" | "신체진찰" | "환자교육" | "환자의사관계(PPI)" | "신체진찰태도" ...
+  description: string;
+  levels: RubricLevel[]; // 높은 점수부터. 이진은 [예, 아니오]
+  criteria?: string; // 채점관에게 주는 판정 기준(예: "예=시작 시점을 물음 / 아니오=안 물음")
 };
 
 export type PatientCase = {
   id: string;
-  title: string; // 예: "급성 복통 35세 여성"
-  chiefComplaint: string; // 주증상
+  title: string;
+  chiefComplaint: string;
+  doorway?: string; // 문 앞 정보(활력징후 등) — 선택 화면/세션에 표시
   persona: {
     name: string;
     age: number;
     sex: "남" | "여";
-    personality: string; // 예: "약간 불안해함, 말수 적음"
-    speakingStyle: string; // 예: "존댓말, 짧게 대답, 먼저 정보를 주지 않음"
+    personality: string;
+    speakingStyle: string;
   };
-  openingStatement: string; // 진료실 들어와 처음 하는 말 (의사가 첫 질문 전 보여줄 대사)
-  publicInfo: string; // 안 물어봐도 자연스럽게 드러나도 되는 정보
-  gatedFacts: GatedFact[]; // ★ 의사가 물어봐야만 드러나는 정보
-  hiddenDiagnosis: string; // ★ 환자가 절대 먼저 말하면 안 되는 것(진단명/검사결과 추정 등)
-  rubric: RubricItem[]; // ★ 면담 종료 후 채점 기준
+  openingStatement: string;
+  publicInfo: string;
+  gatedFacts: GatedFact[];
+  hiddenDiagnosis: string;
+  rubric: RubricItem[];
 };
 
-// 채점 결과 타입 (scoring 에이전트가 반환)
-export type ScoreResult = {
+// ── 채점 결과 타입 (서버가 계산해 프론트로 반환) ──
+export type ScoredItem = {
   id: string;
-  met: boolean;
-  evidence: string; // 충족 근거 또는 놓친 이유
+  category: string;
+  description: string;
+  levelLabel: string; // 판정된 레벨
+  points: number; // 획득 점수
+  maxPoints: number; // 만점
+  evidence: string;
 };
+
+export type CategoryScore = { category: string; points: number; max: number };
 
 export type ScoreResponse = {
-  items: ScoreResult[];
-  summary: string; // 놓친 항목 위주의 한국어 요약 피드백 한 단락
+  items: ScoredItem[];
+  categories: CategoryScore[];
+  total: number;
+  max: number;
+  percentage: number;
+  summary: string;
 };

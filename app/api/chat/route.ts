@@ -1,7 +1,7 @@
 import { streamText } from "ai";
 import { patientModel } from "@/backend/models";
 import { buildPatientSystemPrompt } from "@/backend/patient/prompt";
-import { seedCase } from "@/backend/cases/seed-case";
+import { getCase } from "@/backend/cases";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -10,10 +10,13 @@ type ClientMessage = { role: "user" | "assistant"; content: string };
 
 export async function POST(req: Request) {
   try {
-    const { messages } = (await req.json()) as { messages: ClientMessage[] };
+    const { messages, caseId } = (await req.json()) as {
+      messages: ClientMessage[];
+      caseId?: string;
+    };
 
-    // 단일 증례(seedCase) 기준. 당일 교체 시 이 import 하나만 바뀐다.
-    const system = buildPatientSystemPrompt(seedCase);
+    // 선택된 증례로 환자 시스템 프롬프트 조립
+    const system = buildPatientSystemPrompt(getCase(caseId));
 
     const result = streamText({
       model: patientModel,
@@ -22,12 +25,9 @@ export async function POST(req: Request) {
       temperature: 0.7,
     });
 
-    // 단순 텍스트 스트림으로 반환 (클라이언트에서 fetch reader로 소비)
     return result.toTextStreamResponse();
   } catch (err) {
     console.error("[/api/chat]", err);
-    return new Response("환자 응답 생성 중 오류가 발생했습니다.", {
-      status: 500,
-    });
+    return new Response("환자 응답 생성 중 오류가 발생했습니다.", { status: 500 });
   }
 }

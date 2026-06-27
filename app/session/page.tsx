@@ -1,5 +1,5 @@
-import Chat from "@/frontend/components/Chat";
+import Session from "@/frontend/components/Session";
 
 export default function SessionPage() {
-  return <Chat />;
+  return <Session />;
 }
