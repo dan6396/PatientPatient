@@ -21,6 +21,37 @@ export type RubricItem = {
   criteria?: string; // 채점관에게 주는 판정 기준(예: "예=시작 시점을 물음 / 아니오=안 물음")
 };
 
+// ── 교육 피드백 카드(모범답안) — 진단/근거/감별/검사/치료/교육 ──
+export type TeachingSection = { key: string; title: string; items: string[] };
+export type Teaching = { impression: string; sections: TeachingSection[] };
+
+// 채점 결과로 내려가는 형태(응시자가 다룬 항목 covered 표시)
+export type TeachingFeedbackItem = { text: string; covered: boolean };
+export type TeachingFeedbackSection = { title: string; items: TeachingFeedbackItem[] };
+export type TeachingFeedback = {
+  impression: string;
+  studentImpression: string;
+  impressionCorrect: boolean;
+  sections: TeachingFeedbackSection[];
+};
+
+// ── 신체진찰(OSCE) 술기 — 아바타에서 보기로 고른다 ──
+export type ExamEffect = "press" | "wave" | "jerk" | "droop" | "fan" | "eye";
+
+export type ExamManeuver = {
+  rubricId: string; // 어느 신체진찰 채점 항목과 연결되는지
+  label: string; // 보기 텍스트
+  region: string; // 아바타 부위 키 (body.ts의 REGION)
+  effect: ExamEffect; // 트리거할 모션
+  finding: "양성" | "정상"; // 양성이면 그 부위가 빨강 소견으로 유지
+  resultText: string; // 수행 결과/소견 한 줄
+  // 기법 후속 선택(있으면 레벨 결정). 예: 양쪽/한쪽
+  followup?: { prompt: string; options: { label: string; level: number }[] };
+};
+
+// 프론트가 채점 요청에 함께 보내는 신체진찰 수행 결과
+export type ExamFinding = { rubricId: string; level: number };
+
 export type PatientCase = {
   id: string;
   title: string;
@@ -38,6 +69,8 @@ export type PatientCase = {
   gatedFacts: GatedFact[];
   hiddenDiagnosis: string;
   rubric: RubricItem[];
+  teaching?: Teaching; // 교육 피드백 카드(모범답안)
+  physicalExam?: ExamManeuver[]; // (미사용) 신체진찰 술기 보기
 };
 
 // ── 채점 결과 타입 (서버가 계산해 프론트로 반환) ──
@@ -60,4 +93,5 @@ export type ScoreResponse = {
   max: number;
   percentage: number;
   summary: string;
+  teaching?: TeachingFeedback;
 };

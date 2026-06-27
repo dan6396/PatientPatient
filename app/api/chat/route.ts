@@ -2,6 +2,7 @@ import { streamText } from "ai";
 import { patientModel } from "@/backend/models";
 import { buildPatientSystemPrompt } from "@/backend/patient/prompt";
 import { getCase } from "@/backend/cases";
+import { getMood } from "@/backend/cases/moods";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -10,19 +11,20 @@ type ClientMessage = { role: "user" | "assistant"; content: string };
 
 export async function POST(req: Request) {
   try {
-    const { messages, caseId } = (await req.json()) as {
+    const { messages, caseId, moodId } = (await req.json()) as {
       messages: ClientMessage[];
       caseId?: string;
+      moodId?: string;
     };
 
-    // 선택된 증례로 환자 시스템 프롬프트 조립
-    const system = buildPatientSystemPrompt(getCase(caseId));
+    // 선택된 증례 + 감정 상태로 환자 시스템 프롬프트 조립
+    const system = buildPatientSystemPrompt(getCase(caseId), getMood(moodId));
 
     const result = streamText({
       model: patientModel,
       system,
       messages: messages ?? [],
-      temperature: 0.7,
+      temperature: 0.9,
     });
 
     return result.toTextStreamResponse();
