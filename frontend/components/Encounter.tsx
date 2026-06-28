@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import { getMood, randomMoodId } from "@/backend/cases/moods";
-import type { ScoreResponse } from "@/backend/cases/case-types";
+import type { ScoreResponse, ExamMessage } from "@/backend/cases/case-types";
 import Chat, { type Turn } from "./Chat";
+import PhysicalExam from "./PhysicalExam";
 import ScoreReport from "./ScoreReport";
 
-type Phase = "history" | "scoring" | "result";
+type Phase = "history" | "exam" | "scoring" | "result";
 
 export default function Encounter({
   caseId,
@@ -21,21 +22,27 @@ export default function Encounter({
   const [turns, setTurns] = useState<Turn[]>([]);
   const [report, setReport] = useState<ScoreResponse | null>(null);
 
-  async function score() {
+  // 문진 종료 → 신체진찰 단계로
+  function finishHistory() {
+    setPhase("exam");
+  }
+
+  // 신체진찰 종료 → 채점(문진 + 신체진찰 함께 전송)
+  async function finishExam(performedParts: string[], examMessages: ExamMessage[]) {
     setPhase("scoring");
     try {
       const transcript = turns.filter((t) => t.content.trim().length > 0);
       const res = await fetch("/api/score", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ transcript, caseId }),
+        body: JSON.stringify({ transcript, caseId, performedParts, examMessages }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error ?? "score failed");
       setReport(data as ScoreResponse);
       setPhase("result");
     } catch {
-      setPhase("history");
+      setPhase("exam");
       alert("채점에 실패했습니다. 다시 시도해 주세요.");
     }
   }
@@ -53,10 +60,14 @@ export default function Encounter({
         moodId={moodId}
         turns={turns}
         setTurns={setTurns}
-        onFinishHistory={score}
+        onFinishHistory={finishHistory}
         onExit={onExit}
       />
     );
+  }
+
+  if (phase === "exam") {
+    return <PhysicalExam caseId={caseId} onFinish={finishExam} onExit={onExit} />;
   }
 
   if (phase === "scoring") {

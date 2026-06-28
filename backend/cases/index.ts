@@ -14,3 +14,6 @@ export const casesById: Record<string, PatientCase> = Object.fromEntries(
 export function getCase(id?: string): PatientCase {
   return (id && casesById[id]) || cases[0];
 }
+
+// 신체진찰 루브릭(채점 라우트에서 사용)
+export { getExamRubric } from "./exam-rubric";
