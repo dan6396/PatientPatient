@@ -82,11 +82,6 @@ export default function ScoreReport({
         <div>
           <h2 className="font-display text-4xl text-ink">채점 결과</h2>
           <p className="mt-1 text-sm text-ink-soft">CPX 채점표 기준 자동 평가</p>
-          {patientMood && (
-            <p className="mt-1 text-xs text-ink-soft">
-              이번 환자 상태: <span className="font-medium text-ink">{patientMood}</span>
-            </p>
-          )}
         </div>
         <div className="text-right">
           <div className="font-display text-4xl text-ink">
@@ -102,7 +97,11 @@ export default function ScoreReport({
         <div className="mb-6 rounded-xl border border-ink/15 bg-ink/[0.04] p-5">
           <div className="mb-3 flex items-center justify-between">
             <h3 className="font-display text-xl text-ink">교육 피드백</h3>
-            <span className="text-xs text-red-600">빨강 = 놓친 항목 · 보충 공부</span>
+            <span className="text-xs">
+              <span className="text-emerald-700">초록 ✓ = 다룬 항목</span>
+              <span className="text-ink-soft"> · </span>
+              <span className="text-red-600">빨강 = 놓친 항목(보충 공부)</span>
+            </span>
           </div>
 
           <div className="mb-3 text-sm">
@@ -131,11 +130,14 @@ export default function ScoreReport({
                   {s.items.map((it, i) => (
                     <li
                       key={i}
-                      className={`text-sm leading-relaxed ${
-                        it.covered ? "text-ink" : "font-medium text-red-600"
+                      className={`flex items-start gap-1.5 text-sm leading-relaxed ${
+                        it.covered ? "text-emerald-700" : "font-medium text-red-600"
                       }`}
                     >
-                      <span className="text-ink-soft/40">·</span> {it.text}
+                      <span className="mt-px shrink-0 font-bold">
+                        {it.covered ? "✓" : "·"}
+                      </span>
+                      <span>{it.text}</span>
                     </li>
                   ))}
                 </ul>

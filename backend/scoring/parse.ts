@@ -47,8 +47,11 @@ export function parseScoreResponse(raw: string): ParsedScore {
     })
     .filter((x): x is RawScore => x !== null);
 
+  // covered는 숫자(권장) 또는 문자열로 올 수 있다 — 둘 다 문자열로 정규화해 보존한다.
   const covered = Array.isArray(obj.covered)
-    ? obj.covered.filter((c): c is string => typeof c === "string")
+    ? obj.covered
+        .map((c) => (typeof c === "number" ? String(c) : typeof c === "string" ? c : null))
+        .filter((c): c is string => c !== null)
     : [];
 
   return {

@@ -85,5 +85,8 @@ export function getMood(id?: string): Mood {
 }
 
 export function randomMoodId(): string {
-  return MOODS[Math.floor(Math.random() * MOODS.length)].id;
+  // 감정 상태 기능 비활성화 — 항상 노멀(calm)만 사용한다.
+  // 다시 켜려면 아래 한 줄을 되살리면 된다:
+  //   return MOODS[Math.floor(Math.random() * MOODS.length)].id;
+  return "calm";
 }

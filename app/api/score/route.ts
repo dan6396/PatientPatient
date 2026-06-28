@@ -1,6 +1,6 @@
 import { generateText } from "ai";
 import { scoringModel } from "@/backend/models";
-import { buildScoringPrompt, type TranscriptTurn } from "@/backend/scoring/prompt";
+import { buildScoringPrompt, flattenTeaching, type TranscriptTurn } from "@/backend/scoring/prompt";
 import { parseScoreResponse } from "@/backend/scoring/parse";
 import { getCase } from "@/backend/cases";
 import type {
@@ -75,11 +75,11 @@ export async function POST(req: Request) {
         "문진이 진행되지 않았습니다. 환자에게 직접 병력을 청취한 뒤 면담을 종료해 주세요.";
     } else {
       const { system, prompt } = buildScoringPrompt(transcript, rubric, activeCase.teaching);
+      // gpt-5.5(추론 모델)는 temperature 커스텀을 거부하므로 보내지 않는다(기본값 사용).
       const { text } = await generateText({
         model: scoringModel,
         system,
         prompt,
-        temperature: 0,
       });
       const parsed = parseScoreResponse(text);
       summary = parsed.summary;
@@ -96,6 +96,19 @@ export async function POST(req: Request) {
       });
     }
 
+    // covered는 항목 "번호"(권장) 또는 옛 형식 문자열 둘 다 허용 — 견고하게 매칭한다.
+    const coveredNums = new Set(
+      covered
+        .map((c) => parseInt(String(c).match(/\d+/)?.[0] ?? "", 10))
+        .filter((n) => Number.isFinite(n))
+    );
+    // key-idx → 전역 번호 매핑(프롬프트와 동일한 번호 체계)
+    const numByKeyIdx = new Map(
+      activeCase.teaching
+        ? flattenTeaching(activeCase.teaching).map((f) => [`${f.key}-${f.idx}`, f.num])
+        : []
+    );
+
     const teaching: TeachingFeedback | undefined = activeCase.teaching
       ? {
           impression: activeCase.teaching.impression,
@@ -105,7 +118,7 @@ export async function POST(req: Request) {
             title: s.title,
             items: s.items.map((it, i) => ({
               text: it,
-              covered: covered.includes(`${s.key}-${i}`),
+              covered: coveredNums.has(numByKeyIdx.get(`${s.key}-${i}`) ?? -1),
             })),
           })),
         }
