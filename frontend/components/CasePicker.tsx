@@ -21,7 +21,6 @@ export default function CasePicker({ onSelect }: { onSelect: (id: string) => voi
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h2 className="font-display text-2xl text-ink">{c.title}</h2>
-                <p className="mt-1 text-sm text-ink-soft">{c.chiefComplaint}</p>
               </div>
               <span className="mt-1 shrink-0 text-ink-soft transition-transform group-hover:translate-x-1">
                 →
