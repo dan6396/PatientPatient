@@ -129,6 +129,13 @@ export type CaseExamData = {
 // 수련생이 입력한 진찰 지시 한 건 (채점용)
 export type ExamMessage = { input: string; partIds: string[] };
 
+// 신체진찰 대화 한 줄 (최종 피드백 "대화 내역" 표시용)
+export type ExamDialogueTurn =
+  | { kind: "student"; text: string }
+  | { kind: "finding"; label: string; text: string }
+  | { kind: "clarify"; text: string }
+  | { kind: "unmatched" };
+
 // ── 신체진찰 루브릭 + 점수 ──
 export type ExamRubricItem = {
   id: string;

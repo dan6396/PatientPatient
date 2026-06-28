@@ -5,14 +5,9 @@ import { getCase } from "@/backend/cases";
 import type { PatientCase } from "@/backend/cases/case-types";
 import { useVoice, type VoiceStatus } from "../hooks/useVoice";
 import VoiceVisualizer from "./VoiceVisualizer";
+import { TimerBar, type TimerInfo } from "./TimerBar";
 
 export type Turn = { role: "doctor" | "patient"; content: string };
-
-function fmtTime(s: number) {
-  const m = Math.floor(s / 60);
-  const sec = s % 60;
-  return `${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
-}
 
 const STATUS_LABEL: Record<VoiceStatus, string> = {
   idle: "진료를 시작하세요 · 먼저 말씀하세요",
@@ -32,6 +27,7 @@ export default function Chat({
   finishLabel = "면담 종료",
   phaseLabel,
   caseData,
+  timer,
 }: {
   caseId: string;
   moodId: string;
@@ -42,11 +38,11 @@ export default function Chat({
   finishLabel?: string; // 진행 버튼 문구(단계별로 다름)
   phaseLabel?: string; // 헤더에 붙는 단계 이름(예: "환자교육")
   caseData?: PatientCase; // 업로드된 커스텀 증례(있으면 caseId 대신 사용)
+  timer?: TimerInfo; // 단계를 넘어가도 이어지는 타이머(Encounter가 소유)
 }) {
   const activeCase = caseData ?? getCase(caseId);
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
-  const [seconds, setSeconds] = useState(0);
   const [voiceOn, setVoiceOn] = useState(true); // 기본은 음성 모드(아래에서 텍스트로 전환 가능)
   const [conversing, setConversing] = useState(false);
   const [voicePreparing, setVoicePreparing] = useState(false);
@@ -54,11 +50,6 @@ export default function Chat({
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const voice = useVoice(caseId, moodId, caseData);
-
-  useEffect(() => {
-    const t = setInterval(() => setSeconds((s) => s + 1), 1000);
-    return () => clearInterval(t);
-  }, []);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -203,7 +194,6 @@ export default function Chat({
           </h1>
         </div>
         <div className="flex items-center gap-4">
-          <span className="font-display text-lg tabular-nums text-ink">{fmtTime(seconds)}</span>
           <button
             onClick={finish}
             disabled={streaming}
@@ -213,6 +203,8 @@ export default function Chat({
           </button>
         </div>
       </div>
+
+      {timer && <TimerBar {...timer} />}
 
       {voiceOn ? (
         <>

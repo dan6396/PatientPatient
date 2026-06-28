@@ -1,14 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getMood, randomMoodId } from "@/backend/cases/moods";
-import type { ScoreResponse, ExamMessage, PatientCase } from "@/backend/cases/case-types";
+import type { ScoreResponse, ExamMessage, ExamDialogueTurn, PatientCase } from "@/backend/cases/case-types";
 import Chat, { type Turn } from "./Chat";
 import PhysicalExam from "./PhysicalExam";
 import ScoreReport from "./ScoreReport";
+import type { TimerInfo, PhaseDurations } from "./TimerBar";
 
 type Phase = "history" | "exam" | "education" | "scoring" | "result";
-type ExamData = { performedParts: string[]; examMessages: ExamMessage[] };
+type ExamData = {
+  performedParts: string[];
+  examMessages: ExamMessage[];
+  dialogue: ExamDialogueTurn[];
+};
+const ZERO: PhaseDurations = { history: 0, exam: 0, education: 0 };
 
 export default function Encounter({
   caseId,
@@ -25,22 +31,50 @@ export default function Encounter({
   // turns 는 문진·환자교육 두 단계가 "같은 대화"로 이어진다.
   const [turns, setTurns] = useState<Turn[]>([]);
   const [examData, setExamData] = useState<ExamData | null>(null);
+  const [historyLen, setHistoryLen] = useState(0); // 문진 종료 시점의 turns 길이(피드백에서 신체진찰을 사이에 끼우기 위함)
   const [report, setReport] = useState<ScoreResponse | null>(null);
 
-  // 관절통증 도메인 — 커스텀 증례도 관절 진찰 소견을 공통 폴백으로 써서 신체진찰 단계를 거친다.
+  // ── 단계별 타이머 (단계를 넘어가도 이어진다) ──
+  const [timerOn, setTimerOn] = useState(true);
+  const [durations, setDurations] = useState<PhaseDurations>(ZERO);
+  const phaseStartRef = useRef<number>(Date.now()); // 현재 단계 시작 시각
+  const [nowTick, setNowTick] = useState(Date.now());
+
+  // 면담 단계(history/exam/education) 동안 1초마다 실시간 갱신
+  useEffect(() => {
+    if (phase === "scoring" || phase === "result") return;
+    const t = setInterval(() => setNowTick(Date.now()), 500);
+    return () => clearInterval(t);
+  }, [phase]);
+
+  // 현재 단계 누적시간을 durations에 합치고 다음 단계 시작점을 리셋
+  function commitPhase(p: "history" | "exam" | "education") {
+    const elapsed = Date.now() - phaseStartRef.current;
+    phaseStartRef.current = Date.now();
+    setDurations((d) => ({ ...d, [p]: d[p] + elapsed }));
+  }
+
   // 문진 종료 → 신체진찰
   function finishHistory() {
+    commitPhase("history");
+    setHistoryLen(turns.length); // 여기까지가 문진 대화 — 이후는 교육
     setPhase("exam");
   }
 
-  // 신체진찰 종료 → 환자교육(대화 계속) — 신체진찰 결과는 보관해뒀다가 채점에 사용
-  function finishExam(performedParts: string[], examMessages: ExamMessage[]) {
-    setExamData({ performedParts, examMessages });
+  // 신체진찰 종료 → 환자교육(대화 계속)
+  function finishExam(
+    performedParts: string[],
+    examMessages: ExamMessage[],
+    dialogue: ExamDialogueTurn[]
+  ) {
+    commitPhase("exam");
+    setExamData({ performedParts, examMessages, dialogue });
     setPhase("education");
   }
 
   // 환자교육 종료 → 채점(문진+교육 대화 전체 + 신체진찰)
   async function finishEducation() {
+    commitPhase("education");
     setPhase("scoring");
     try {
       const transcript = turns.filter((t) => t.content.trim().length > 0);
@@ -68,8 +102,22 @@ export default function Encounter({
   function restart() {
     setTurns([]);
     setExamData(null);
+    setHistoryLen(0);
     setReport(null);
+    setDurations(ZERO);
+    phaseStartRef.current = Date.now();
     setPhase("history");
+  }
+
+  // 현재 단계 컴포넌트에 넘길 타이머 정보
+  function makeTimer(p: "history" | "exam" | "education"): TimerInfo {
+    return {
+      on: timerOn,
+      onToggle: () => setTimerOn((v) => !v),
+      durations,
+      phase: p,
+      currentMs: Math.max(0, nowTick - phaseStartRef.current),
+    };
   }
 
   if (phase === "history") {
@@ -83,13 +131,20 @@ export default function Encounter({
         onExit={onExit}
         finishLabel="신체진찰로 넘어가기"
         caseData={caseData}
+        timer={makeTimer("history")}
       />
     );
   }
 
   if (phase === "exam") {
     return (
-      <PhysicalExam caseId={caseId} onFinish={finishExam} onExit={onExit} caseData={caseData} />
+      <PhysicalExam
+        caseId={caseId}
+        onFinish={finishExam}
+        onExit={onExit}
+        caseData={caseData}
+        timer={makeTimer("exam")}
+      />
     );
   }
 
@@ -106,6 +161,7 @@ export default function Encounter({
         finishLabel="채점하기"
         phaseLabel="환자교육"
         caseData={caseData}
+        timer={makeTimer("education")}
       />
     );
   }
@@ -124,7 +180,10 @@ export default function Encounter({
         <ScoreReport
           report={report}
           transcript={turns}
+          historyLen={historyLen}
+          examDialogue={examData?.dialogue ?? []}
           patientMood={getMood(moodId).label}
+          durations={durations}
           onRestart={restart}
           onExit={onExit}
         />

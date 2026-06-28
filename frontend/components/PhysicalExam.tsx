@@ -4,8 +4,9 @@ import { useRef, useState } from "react";
 import { getCase } from "@/backend/cases";
 import { useVoice } from "../hooks/useVoice";
 import VoiceVisualizer from "./VoiceVisualizer";
-import type { ExamPartId, ExamMessage, PatientCase } from "@/backend/cases/case-types";
+import type { ExamPartId, ExamMessage, ExamDialogueTurn, PatientCase } from "@/backend/cases/case-types";
 import type { VoiceStatus } from "../hooks/useVoice";
+import { TimerBar, type TimerInfo } from "./TimerBar";
 
 interface ExamMedia {
   baseImage?: string;        // 영상 종료 후 되돌아갈 정지 이미지
@@ -98,11 +99,17 @@ export default function PhysicalExam({
   onFinish,
   onExit,
   caseData,
+  timer,
 }: {
   caseId: string;
-  onFinish: (performedParts: string[], examMessages: ExamMessage[]) => void;
+  onFinish: (
+    performedParts: string[],
+    examMessages: ExamMessage[],
+    examDialogue: ExamDialogueTurn[]
+  ) => void;
   onExit: () => void;
   caseData?: PatientCase;
+  timer?: TimerInfo; // 단계를 넘어가도 이어지는 타이머(Encounter가 소유)
 }) {
   const activeCase = caseData ?? getCase(caseId);
   const [input, setInput] = useState("");
@@ -257,7 +264,17 @@ export default function PhysicalExam({
         <button
           onClick={() => {
             if (voiceOn) exitVoice();
-            onFinish([...performedSet], examMessages);
+            // 진찰 대화(지시→소견)를 피드백 "대화 내역"에 넘긴다.
+            const dialogue: ExamDialogueTurn[] = turns.map((t) =>
+              t.type === "student"
+                ? { kind: "student", text: t.input }
+                : t.type === "finding"
+                  ? { kind: "finding", label: t.label, text: t.finding }
+                  : t.type === "clarify"
+                    ? { kind: "clarify", text: t.message }
+                    : { kind: "unmatched" }
+            );
+            onFinish([...performedSet], examMessages, dialogue);
           }}
           disabled={loading}
           className="rounded-full bg-ink px-4 py-2 text-sm font-medium text-[var(--bg)] transition-opacity disabled:opacity-50"
@@ -265,6 +282,8 @@ export default function PhysicalExam({
           환자교육으로 넘어가기
         </button>
       </div>
+
+      {timer && <TimerBar {...timer} />}
 
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* 미디어 창 — 이미지·애니메이션 전용 */}
