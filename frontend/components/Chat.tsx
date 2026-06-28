@@ -14,7 +14,7 @@ function fmtTime(s: number) {
 }
 
 const STATUS_LABEL: Record<VoiceStatus, string> = {
-  idle: "대화를 시작하세요",
+  idle: "진료를 시작하세요 · 먼저 말씀하세요",
   listening: "듣고 있어요 · 편하게 말씀하세요",
   recording: "말하는 중…",
   transcribing: "인식 중…",
@@ -40,7 +40,7 @@ export default function Chat({
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
   const [seconds, setSeconds] = useState(0);
-  const [voiceOn, setVoiceOn] = useState(false);
+  const [voiceOn, setVoiceOn] = useState(true); // 기본은 음성 모드(아래에서 텍스트로 전환 가능)
   const [conversing, setConversing] = useState(false);
   const [voicePreparing, setVoicePreparing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -248,6 +248,12 @@ export default function Chat({
       ) : (
         <>
           <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto px-5 py-6">
+            {turns.length === 0 && !error && (
+              <div className="flex h-full flex-col items-center justify-center gap-1 text-center">
+                <p className="font-display text-lg text-ink">진료를 시작하세요</p>
+                <p className="text-sm text-ink-soft/70">환자에게 먼저 질문해 주세요.</p>
+              </div>
+            )}
             {turns.map((t, i) => (
               <div
                 key={i}

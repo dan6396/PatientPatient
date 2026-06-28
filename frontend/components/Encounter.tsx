@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { getCase } from "@/backend/cases";
 import { getMood, randomMoodId } from "@/backend/cases/moods";
 import type { ScoreResponse } from "@/backend/cases/case-types";
 import Chat, { type Turn } from "./Chat";
@@ -16,12 +15,10 @@ export default function Encounter({
   caseId: string;
   onExit: () => void;
 }) {
-  const activeCase = getCase(caseId);
   const [phase, setPhase] = useState<Phase>("history");
   const [moodId] = useState(() => randomMoodId()); // 매 면담마다 랜덤 감정 상태
-  const [turns, setTurns] = useState<Turn[]>(() => [
-    { role: "patient", content: activeCase.openingStatement },
-  ]);
+  // 환자가 먼저 말하지 않는다 — 의사(사용자)가 먼저 진료를 시작한다.
+  const [turns, setTurns] = useState<Turn[]>([]);
   const [report, setReport] = useState<ScoreResponse | null>(null);
 
   async function score() {
@@ -44,7 +41,7 @@ export default function Encounter({
   }
 
   function restart() {
-    setTurns([{ role: "patient", content: activeCase.openingStatement }]);
+    setTurns([]);
     setReport(null);
     setPhase("history");
   }
