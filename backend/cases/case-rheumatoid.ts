@@ -1,9 +1,17 @@
 // 전라컨소시엄 CPX 증례: 류마티스 관절염 (주증상: 양측 손가락마디와 손목 통증)
-// 채점표(병력청취 10×4 / 신체진찰 5×3 / 환자교육 4×4 / PPI 5×4 + 신체진찰태도 4 = 95점)를 PDF 그대로 옮김.
-// ※ PDF 원본은 45세이나 대회 요청으로 55세로 설정함.
+// 채점표(병력청취 10×4 / 신체진찰 5×3 / 환자교육 4×4 / 환자의사관계(PPI) 6×3 = 89점).
+// ※ PDF 원본은 45세이나 대회 요청으로 55세로 설정함. PPI는 신 워크시트 6항목 구조.
 
-import type { PatientCase } from "./case-types";
-import { yesno, tri, edu, ppi } from "./rubric";
+import type { PatientCase, RubricLevel } from "./case-types";
+import { yesno, tri, edu } from "./rubric";
+
+// 환자의사관계(PPI) 평가 척도: 아주 우수 3 / 우수 2 / 보통 1 / 미흡 0
+const ppiLv: RubricLevel[] = [
+  { label: "아주 우수", points: 3 },
+  { label: "우수", points: 2 },
+  { label: "보통", points: 1 },
+  { label: "미흡", points: 0 },
+];
 
 export const rheumatoidCase: PatientCase = {
   id: "rheumatoid",
@@ -85,15 +93,13 @@ export const rheumatoidCase: PatientCase = {
     { id: "edu3", category: "환자교육", description: "감별해야 할 질환을 이유와 함께 설명했다", levels: edu(4, 2), criteria: "우수=근거와 감별질환 모두 / 보통=감별질환만 / 미흡=설명 안 함" },
     { id: "edu4", category: "환자교육", description: "치료 계획을 적절히 설명했다", levels: edu(4, 2), criteria: "우수=약물치료(항류마티스약제)와 비약물치료(금연·운동) 모두 / 보통=한 가지만 / 미흡=설명 안 함" },
 
-    // ── 환자의사관계 PPI (5 × 4점) ──
-    { id: "ppi1", category: "환자의사관계(PPI)", description: "효율적으로 잘 물어보았다(개방형 질문·확인·중간 요약)", levels: ppi },
-    { id: "ppi2", category: "환자의사관계(PPI)", description: "환자의 말을 잘 들어주었다(경청·눈맞춤·말 가로채지 않기)", levels: ppi },
-    { id: "ppi3", category: "환자의사관계(PPI)", description: "환자의 입장을 이해하려 노력했다(공감 표현)", levels: ppi },
-    { id: "ppi4", category: "환자의사관계(PPI)", description: "환자가 이해하기 쉽게 설명했다(간단명료·쉬운 용어·이해도 점검)", levels: ppi },
-    { id: "ppi5", category: "환자의사관계(PPI)", description: "좋은 유대관계를 형성하려 했다(자기소개·존중·신뢰감)", levels: ppi },
-
-    // ── 신체진찰태도 (1 × 4점) ──
-    { id: "att1", category: "신체진찰태도", description: "신체진찰 태도가 좋았다(손 위생·가려주기·사전설명)", levels: ppi },
+    // ── 환자의사관계 PPI (6 × 3점: 아주우수 3 / 우수 2 / 보통 1 / 미흡 0) ──
+    { id: "ppi1", category: "환자의사관계(PPI)", description: "나와 좋은 유대관계를 형성하려고 했다", levels: ppiLv, criteria: "환자확인·자기소개, 편하게 시작, 편안한 분위기, 공감과 지지, 무비판적 수용, 진정성/솔직함, 신뢰, 자신감, 존중" },
+    { id: "ppi2", category: "환자의사관계(PPI)", description: "내 이야기를 효율적으로 물어보고 잘 들어주었다", levels: ppiLv, criteria: "면담주제 협상, 대답 여유 주기, 경청 자세, 호응, 확인, 개방형/폐쇄형 질문의 적절한 사용, 쉬운 용어, 한 번에 하나씩 묻는 분리질문" },
+    { id: "ppi3", category: "환자의사관계(PPI)", description: "나의 생각과 배경을 효과적으로 알아냈다", levels: ppiLv, criteria: "일상생활 영향 파악, 기분/정서표현 격려, 생각/걱정 질문, 나의 기대 파악, 입장·배경·처지에 대한 관심" },
+    { id: "ppi4", category: "환자의사관계(PPI)", description: "내가 이해하기 쉽게 설명하였다", levels: ppiLv, criteria: "필요한 정보 제공, 근거 있는 설명, 환자 의견·선택권 고려, 쉬운 용어, 기억하기 쉽게 설명, 이해 점검 및 질문 기회" },
+    { id: "ppi5", category: "환자의사관계(PPI)", description: "면담을 체계적으로 이끌어나갔다", levels: ppiLv, criteria: "논리적·체계적 순서, 적절한 시간 배분, 주기적 요약/면담 방향 제시, 환자 반응에 따라 질문 이어가기" },
+    { id: "ppi6", category: "환자의사관계(PPI)", description: "신체진찰 태도가 좋았다", levels: ppiLv, criteria: "손 위생, 사전 설명, 가려주기, 환자 안전과 불편함 배려" },
   ],
 
   teaching: {
