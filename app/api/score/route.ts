@@ -168,14 +168,17 @@ async function buildExamScore(
 
 export async function POST(req: Request) {
   try {
-    const { transcript, caseId, performedParts, examMessages } = (await req.json()) as {
-      transcript: TranscriptTurn[];
+    const { transcript: rawTranscript, caseId, performedParts, examMessages } = (await req.json()) as {
+      transcript?: TranscriptTurn[];
       caseId?: string;
       performedParts?: string[];
       examMessages?: ExamMessage[];
     };
 
-    if (!transcript || transcript.length === 0) {
+    // 문진이 비어 있어도(의사 먼저 시작 구조) 막지 않고 graceful 채점한다.
+    // 단 문진·신체진찰 둘 다 전혀 없으면 채점 대상이 없으므로 거절.
+    const transcript: TranscriptTurn[] = Array.isArray(rawTranscript) ? rawTranscript : [];
+    if (transcript.length === 0 && !performedParts?.length && !examMessages?.length) {
       return Response.json({ error: "채점할 면담 내용이 없습니다." }, { status: 400 });
     }
 
