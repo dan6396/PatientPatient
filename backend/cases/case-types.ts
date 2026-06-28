@@ -86,6 +86,62 @@ export type ScoredItem = {
 
 export type CategoryScore = { category: string; points: number; max: number };
 
+// ── 신체진찰(텍스트 입력형) — 파트 분류 ──
+export type ExamPartId =
+  | "vital_signs"
+  | "eyes"
+  | "mouth"
+  | "lymph_nodes"
+  | "skin_nails"
+  | "lung_auscultation"
+  | "joint_inspection"
+  | "joint_palpation"
+  | "joint_rom";
+
+export type CaseExamFinding = {
+  partId: ExamPartId;
+  label: string;
+  finding: string;
+  animationKey: string;
+  variants?: Record<string, { finding: string; animationKey: string }>;
+};
+
+export type CaseExamData = {
+  caseId: string;
+  findings: Partial<Record<ExamPartId, CaseExamFinding>>;
+};
+
+// 수련생이 입력한 진찰 지시 한 건 (채점용)
+export type ExamMessage = { input: string; partIds: string[] };
+
+// ── 신체진찰 루브릭 + 점수 ──
+export type ExamRubricItem = {
+  id: string;
+  label: string;
+  partId: ExamPartId;
+  weight: number;
+  mannerCriteria?: string; // 있으면 LLM이 transcript로 수기 준수 여부 판정
+};
+
+export type CaseExamRubric = {
+  caseId: string;
+  items: ExamRubricItem[];
+};
+
+export type ExamScoreItem = {
+  id: string;
+  label: string;
+  satisfied: boolean;
+  reason?: string;
+};
+
+export type ExamScoreResult = {
+  totalScore: number;    // 0~100
+  coverageScore: number; // 커버리지만
+  mannerScore: number;   // 수기 준수만
+  items: ExamScoreItem[];
+};
+
 export type ScoreResponse = {
   items: ScoredItem[];
   categories: CategoryScore[];
@@ -94,4 +150,6 @@ export type ScoreResponse = {
   percentage: number;
   summary: string;
   teaching?: TeachingFeedback;
+  examScore?: ExamScoreResult;
+  combinedScore?: number; // INTERVIEW_WEIGHT * 문진% + EXAM_WEIGHT * examScore.totalScore
 };
