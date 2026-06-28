@@ -9,6 +9,21 @@ export function formatTranscript(turns: TranscriptTurn[]): string {
     .join("\n");
 }
 
+// 교육 카드의 모든 항목에 1부터 시작하는 "전역 번호"를 매긴다.
+// LLM이 복합 문자열 id(hx-0 등)보다 단순 번호를 훨씬 정확히 되돌려주므로 covered 매칭이 견고해진다.
+// prompt와 채점 route가 같은 번호를 쓰도록 단일 소스로 공유한다.
+export function flattenTeaching(teaching: Teaching) {
+  const out: { num: number; key: string; idx: number; title: string; text: string }[] = [];
+  let n = 0;
+  for (const s of teaching.sections) {
+    s.items.forEach((text, idx) => {
+      n += 1;
+      out.push({ num: n, key: s.key, idx, title: s.title, text });
+    });
+  }
+  return out;
+}
+
 export function buildScoringPrompt(
   turns: TranscriptTurn[],
   rubric: RubricItem[],
@@ -26,20 +41,20 @@ export function buildScoringPrompt(
   let teachBlock = "";
   let teachSpec = "";
   if (teaching) {
-    const tlines = teaching.sections
-      .flatMap((s) => s.items.map((it, i) => `- ${s.key}-${i} [${s.title}] ${it}`))
+    const tlines = flattenTeaching(teaching)
+      .map((f) => `- ${f.num}. [${f.title}] ${f.text}`)
       .join("\n");
     teachBlock = `
 
 [교육 카드 — 정답 진단: ${teaching.impression}]
-- covered: 응시자(의사)가 transcript에서 "직접 묻거나 설명한" 항목 id만 넣어라(환자가 자발적으로 말한 건 제외).
+- covered: 응시자(의사)가 면담에서 직접 묻거나(개방형 질문으로 자연스럽게 끌어낸 것도 포함) 설명·수행하여 "실제로 다뤄진" 항목의 번호만 넣어라. 단, 면담 맨 처음 환자가 묻기도 전에 먼저 꺼낸 주호소 진술만으로는 인정하지 않는다.
 - studentImpression: 의사가 transcript에서 "직접 말한" 추정진단만 그대로 적는다. 의사가 진단명/추정진단을 한 번도 언급하지 않았으면 반드시 빈 문자열("")로 둔다. 절대 추측하거나 감별진단 목록에서 골라 넣지 마라.
 - impressionCorrect: 의사가 명시적으로 말한 진단이 정답(${teaching.impression})과 일치할 때만 true. 진단 언급이 없으면 false.
 ${tlines}`;
     teachSpec = `,
   "studentImpression": "<의사가 직접 말한 추정진단만. 언급 없으면 빈 문자열>",
   "impressionCorrect": <위 규칙대로 true 또는 false>,
-  "covered": ["<응시자가 다룬 교육 항목 id>", ...]`;
+  "covered": [<응시자가 실제로 다룬 교육 항목의 번호. 예: 2, 5, 7>]`;
   }
 
   const system = `너는 CPX(임상수행평가) 채점관이다. 면담 transcript를 근거로 각 채점 항목의 "레벨 index"(0이 가장 높은 점수)를 고르고, 교육 항목 중 응시자가 다룬 것을 가려낸다.

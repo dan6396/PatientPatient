@@ -173,14 +173,16 @@ export function useVoice(caseId?: string, moodId?: string) {
         handsFreeRef.current = true;
         setStatus("listening");
 
-        const THRESH = 0.045;
+        const THRESH = 0.065; // 잡음에 의한 오인식 시작을 줄이기 위해 상향
         const SILENCE_MS = 1100;
-        const MIN_UTTER_MS = 500;
+        const MIN_UTTER_MS = 700; // 너무 짧은(=잡음일 확률 높은) 발화는 거름
+        const PEAK_SPEECH_THRESH = THRESH * 1.6; // 녹음 내내 잡음 수준만 있었으면 실제 발화로 보지 않음
 
         let state: "listening" | "recording" = "listening";
         let recorder: MediaRecorder | null = null;
         let speechStart = 0;
         let silenceStart = 0;
+        let peakRms = 0;
         let busy = false;
 
         const stopRec = (rec: MediaRecorder): Promise<Blob> =>
@@ -210,6 +212,7 @@ export function useVoice(caseId?: string, moodId?: string) {
                 chunksRef.current = [];
                 speechStart = now;
                 silenceStart = 0;
+                peakRms = rms;
                 recorder = mimeInfo.mime
                   ? new MediaRecorder(stream, { mimeType: mimeInfo.mime })
                   : new MediaRecorder(stream);
@@ -220,6 +223,7 @@ export function useVoice(caseId?: string, moodId?: string) {
                 setStatus("recording");
               }
             } else if (state === "recording") {
+              if (rms > peakRms) peakRms = rms;
               if (rms > THRESH) {
                 silenceStart = 0;
               } else if (!silenceStart) {
@@ -233,12 +237,14 @@ export function useVoice(caseId?: string, moodId?: string) {
                 setStatus("transcribing");
                 const blob = rec ? await stopRec(rec) : new Blob();
                 levelRef.current = 0;
-                if (dur >= MIN_UTTER_MS) {
+                // 충분히 길고, 잡음 수준을 넘어서는 실제 발화 피크가 있었을 때만 STT 호출
+                if (dur >= MIN_UTTER_MS && peakRms >= PEAK_SPEECH_THRESH) {
                   const text = await transcribe(blob, mimeInfo.ext);
                   if (text && handsFreeRef.current) {
                     await onUtterance(text); // 전송 + 환자 응답 + TTS
                   }
                 }
+                peakRms = 0;
                 // TTS가 끝날 때까지 대기 후 재개
                 while (handsFreeRef.current && ttsActiveRef.current) {
                   await new Promise((r) => setTimeout(r, 80));
