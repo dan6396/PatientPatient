@@ -11,7 +11,7 @@ import {
   EXAM_PART_LABELS,
   ALL_EXAM_PARTS,
 } from "@/backend/cases/exam-data";
-import type { ExamPartId } from "@/backend/cases/case-types";
+import type { ExamPartId, PatientCase, CaseExamData } from "@/backend/cases/case-types";
 
 export const runtime = "nodejs";
 
@@ -95,8 +95,7 @@ function cosine(a: number[], b: number[]): number {
 }
 
 // 각 파트의 세부항목(variants) 선택지를 LLM 프롬프트용으로 구성.
-function buildPartSpec(caseId?: string): string {
-  const examData = getExamData(caseId);
+function buildPartSpec(examData: CaseExamData | undefined): string {
   return ALL_EXAM_PARTS.map((partId) => {
     const f = examData?.findings[partId];
     const keys = f?.variants ? Object.keys(f.variants) : [];
@@ -108,15 +107,19 @@ function buildPartSpec(caseId?: string): string {
 
 export async function POST(req: Request) {
   try {
-    const { message, caseId } = (await req.json()) as {
+    const { message, caseId, caseData } = (await req.json()) as {
       message: string;
       caseId?: string;
+      caseData?: PatientCase;
     };
 
     if (!message?.trim()) {
       return Response.json({ error: "입력이 없습니다." }, { status: 400 });
     }
     const text = message.trim();
+
+    // 업로드/생성 증례면 그 증례의 진단별 소견을 쓰고, 아니면 등록된(또는 관절 폴백) 소견.
+    const examData = caseData?.examData ?? getExamData(caseId);
 
     // 1) 임베딩 게이트: 어느 파트와도 충분히 가깝지 않으면 unmatched (LLM 호출 절약)
     const [{ embedding }, partVectors] = await Promise.all([
@@ -173,7 +176,7 @@ ${REGION_KEYS.join(" / ")}
 - 관절이 아닌 파트(vital_signs, eyes 등)는 region을 빈 문자열("")로 둔다.
 
 파트 목록:
-${buildPartSpec(caseId)}`;
+${buildPartSpec(examData)}`;
 
     const { object } = await generateObject({
       model: patientModel,
@@ -191,9 +194,7 @@ ${buildPartSpec(caseId)}`;
       return Response.json({ results: [], unmatched: true });
     }
 
-    const examData = getExamData(caseId);
-
-    // 3) 결과 조립
+    // 3) 결과 조립 (examData는 위에서 이미 결정 — 커스텀 증례면 그 진단별 소견)
     const mapped = object.matches.flatMap((match) => {
       const partId = match.partId;
       const region = match.region ?? "";

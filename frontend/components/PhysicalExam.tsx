@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { getCase } from "@/backend/cases";
 import { useVoice } from "../hooks/useVoice";
 import VoiceVisualizer from "./VoiceVisualizer";
-import type { ExamPartId, ExamMessage } from "@/backend/cases/case-types";
+import type { ExamPartId, ExamMessage, PatientCase } from "@/backend/cases/case-types";
 import type { VoiceStatus } from "../hooks/useVoice";
 
 interface ExamMedia {
@@ -97,12 +97,14 @@ export default function PhysicalExam({
   caseId,
   onFinish,
   onExit,
+  caseData,
 }: {
   caseId: string;
   onFinish: (performedParts: string[], examMessages: ExamMessage[]) => void;
   onExit: () => void;
+  caseData?: PatientCase;
 }) {
-  const activeCase = getCase(caseId);
+  const activeCase = caseData ?? getCase(caseId);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [turns, setTurns] = useState<ExamTurn[]>([]);
@@ -136,7 +138,7 @@ export default function PhysicalExam({
       const res = await fetch("/api/exam", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: trimmed, caseId }),
+        body: JSON.stringify({ message: trimmed, caseId, caseData }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error ?? "exam failed");

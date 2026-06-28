@@ -317,5 +317,7 @@ const examDataMap: Record<string, CaseExamData> = {
 };
 
 export function getExamData(caseId?: string): CaseExamData | undefined {
-  return caseId ? examDataMap[caseId] : undefined;
+  if (caseId && examDataMap[caseId]) return examDataMap[caseId];
+  // 관절통증 도메인 — 등록 안 된(업로드/생성) 증례는 관절 진찰 소견을 공통으로 사용한다.
+  return rheumatoidExamData;
 }

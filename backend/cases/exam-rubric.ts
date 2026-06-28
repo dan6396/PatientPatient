@@ -67,5 +67,7 @@ const examRubricMap: Record<string, CaseExamRubric> = {
 };
 
 export function getExamRubric(caseId?: string): CaseExamRubric | undefined {
-  return caseId ? examRubricMap[caseId] : undefined;
+  if (caseId && examRubricMap[caseId]) return examRubricMap[caseId];
+  // 관절통증 도메인 — 등록 안 된(업로드/생성) 증례는 관절 신체진찰 루브릭을 공통으로 사용한다.
+  return rheumatoidExamRubric;
 }

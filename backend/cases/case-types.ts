@@ -70,6 +70,7 @@ export type PatientCase = {
   hiddenDiagnosis: string;
   rubric: RubricItem[];
   teaching?: Teaching; // 교육 피드백 카드(모범답안)
+  examData?: CaseExamData; // 신체진찰 소견(업로드/생성 증례용 — 진단에 맞는 부위별 소견)
   physicalExam?: ExamManeuver[]; // (미사용) 신체진찰 술기 보기
 };
 

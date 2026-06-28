@@ -27,12 +27,10 @@ export default function Encounter({
   const [examData, setExamData] = useState<ExamData | null>(null);
   const [report, setReport] = useState<ScoreResponse | null>(null);
 
-  // 커스텀(업로드) 증례는 신체진찰 데이터가 없으므로 신체진찰 단계를 건너뛴다.
-  const hasExam = !caseData;
-
-  // 문진 종료 → (정적 증례)신체진찰 / (커스텀)바로 환자교육
+  // 관절통증 도메인 — 커스텀 증례도 관절 진찰 소견을 공통 폴백으로 써서 신체진찰 단계를 거친다.
+  // 문진 종료 → 신체진찰
   function finishHistory() {
-    setPhase(hasExam ? "exam" : "education");
+    setPhase("exam");
   }
 
   // 신체진찰 종료 → 환자교육(대화 계속) — 신체진찰 결과는 보관해뒀다가 채점에 사용
@@ -83,14 +81,16 @@ export default function Encounter({
         setTurns={setTurns}
         onFinishHistory={finishHistory}
         onExit={onExit}
-        finishLabel={hasExam ? "신체진찰로 넘어가기" : "환자교육으로 넘어가기"}
+        finishLabel="신체진찰로 넘어가기"
         caseData={caseData}
       />
     );
   }
 
   if (phase === "exam") {
-    return <PhysicalExam caseId={caseId} onFinish={finishExam} onExit={onExit} />;
+    return (
+      <PhysicalExam caseId={caseId} onFinish={finishExam} onExit={onExit} caseData={caseData} />
+    );
   }
 
   if (phase === "education") {
