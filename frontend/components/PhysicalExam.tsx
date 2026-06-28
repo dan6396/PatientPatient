@@ -16,6 +16,9 @@ interface ExamMedia {
 
 const SEATED_STILL = "/exam-media/seated_patient_front.jpeg";
 
+// 손위생(손소독) 영상 — 채점과 무관한 보조 동작. 재생만 하고 끝나면 기본 화면으로 복귀.
+const HAND_HYGIENE_VIDEO = "/exam-media/hand_hygiene.mp4";
+
 // 기본(휴지) 상태: 앉아있는 환자 영상 1회 재생 후 마지막 프레임에서 정지.
 const DEFAULT_EXAM_MEDIA: ExamMedia = {
   animationVideo: "/exam-media/seated_patient_intro.mp4",
@@ -131,6 +134,13 @@ export default function PhysicalExam({
       () => scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" }),
       50
     );
+  }
+
+  // 손소독 영상 재생 — 채점 상태(performedSet·examMessages·turns)는 건드리지 않는다.
+  // 영상만 재생하고, 끝나면 onFinished로 기본 인트로 화면으로 복귀.
+  function playHandHygiene() {
+    setLatestMedia({ animationVideo: HAND_HYGIENE_VIDEO });
+    setVideoKey((k) => k + 1);
   }
 
   // 텍스트 제출 → 소견 반환
@@ -323,6 +333,13 @@ export default function PhysicalExam({
             {voice.error && (
               <p className="shrink-0 text-[11px] text-red-700">{voice.error}</p>
             )}
+            <button
+              onClick={playHandHygiene}
+              disabled={loading}
+              className="ml-auto shrink-0 rounded-full border border-ink/25 px-3.5 py-2 text-sm font-medium text-ink transition-colors hover:bg-ink/5 disabled:opacity-50"
+            >
+              🧼 손소독
+            </button>
           </div>
         )}
 

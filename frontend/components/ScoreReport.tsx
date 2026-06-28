@@ -318,6 +318,22 @@ export default function ScoreReport({
           <span aria-hidden className="text-lg text-ink-soft">→</span>
         </a>
 
+        {/* 신체진찰 영상으로 학습하기 — 동일 형태 버튼 */}
+        <a
+          href="/study/pe-learning-with-videos.html"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mb-6 flex items-center justify-between gap-3 rounded-xl border border-ink/20 bg-[var(--bg)]/50 px-5 py-4 transition-all hover:-translate-y-0.5 hover:border-ink/40 hover:bg-ink/[0.04]"
+        >
+          <span>
+            <span className="block text-sm font-medium text-ink">신체진찰 영상으로 학습하기</span>
+            <span className="mt-0.5 block text-xs text-ink-soft">
+              주요 신체진찰 술기를 영상과 함께 익히기
+            </span>
+          </span>
+          <span aria-hidden className="text-lg text-ink-soft">→</span>
+        </a>
+
         {/* 신체진찰 항목별 충족/미충족 */}
         {hasExam && report.examScore && (
           <div className="mb-6 rounded-xl border border-ink/15 bg-ink/[0.04] p-5">
