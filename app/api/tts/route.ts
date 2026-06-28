@@ -1,6 +1,7 @@
 import { TTS_MODEL, TTS_VOICE, pickVoice } from "@/backend/models";
-import { getCase } from "@/backend/cases";
+import { resolveCase } from "@/backend/cases/resolve";
 import { getMood } from "@/backend/cases/moods";
+import type { PatientCase } from "@/backend/cases/case-types";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -32,16 +33,17 @@ async function synthesize(text: string, voice: string, instructions?: string): P
 
 export async function POST(req: Request) {
   try {
-    const { text, caseId, moodId } = (await req.json()) as {
+    const { text, caseId, moodId, caseData } = (await req.json()) as {
       text?: string;
       caseId?: string;
       moodId?: string;
+      caseData?: PatientCase;
     };
     if (!text || !text.trim()) {
       return new Response("text 가 비어 있습니다.", { status: 400 });
     }
 
-    const c = getCase(caseId);
+    const c = resolveCase(caseId, caseData);
     const mood = getMood(moodId);
     const { sex, age } = c.persona;
     const voice = c.persona ? pickVoice(sex, age) : TTS_VOICE;

@@ -229,6 +229,22 @@ export default function ScoreReport({
           </div>
         )}
 
+        {/* 다른 Impression(감별진단) 더 공부하기 — 교육 피드백 바로 아래 */}
+        <a
+          href="/study/joint-diseases.html"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mb-6 flex items-center justify-between gap-3 rounded-xl border border-ink/20 bg-[var(--bg)]/50 px-5 py-4 transition-all hover:-translate-y-0.5 hover:border-ink/40 hover:bg-ink/[0.04]"
+        >
+          <span>
+            <span className="block text-sm font-medium text-ink">다른 Impression 더 공부하기</span>
+            <span className="mt-0.5 block text-xs text-ink-soft">
+              관절통증 감별진단(골관절염·쇼그렌·SLE 등)을 한눈에
+            </span>
+          </span>
+          <span aria-hidden className="text-lg text-ink-soft">→</span>
+        </a>
+
         {/* 신체진찰 항목별 충족/미충족 */}
         {hasExam && report.examScore && (
           <div className="mb-6 rounded-xl border border-ink/15 bg-ink/[0.04] p-5">

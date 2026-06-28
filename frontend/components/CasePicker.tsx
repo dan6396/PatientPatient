@@ -2,7 +2,13 @@
 
 import { cases } from "@/backend/cases";
 
-export default function CasePicker({ onSelect }: { onSelect: (id: string) => void }) {
+export default function CasePicker({
+  onSelect,
+  onUpload,
+}: {
+  onSelect: (id: string) => void;
+  onUpload?: () => void;
+}) {
   return (
     <div className="mx-auto flex min-h-[100dvh] max-w-2xl flex-col justify-center px-6 py-16">
       <p className="font-display text-sm italic text-ink-soft/70">Select a case</p>
@@ -33,6 +39,25 @@ export default function CasePicker({ onSelect }: { onSelect: (id: string) => voi
             )}
           </button>
         ))}
+
+        {onUpload && (
+          <button
+            onClick={onUpload}
+            className="group rounded-2xl border border-dashed border-ink/25 bg-transparent p-5 text-left transition-all hover:-translate-y-0.5 hover:border-ink/45 hover:bg-ink/[0.02]"
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="font-display text-2xl text-ink/80">＋ 채점표로 새 증례 만들기</h2>
+                <p className="mt-1 text-sm text-ink-soft">
+                  우리 학교 채점표를 붙여넣어 맞춤 증례 생성
+                </p>
+              </div>
+              <span className="mt-1 shrink-0 text-ink-soft transition-transform group-hover:translate-x-1">
+                →
+              </span>
+            </div>
+          </button>
+        )}
       </div>
     </div>
   );

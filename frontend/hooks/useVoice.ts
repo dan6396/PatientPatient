@@ -30,7 +30,11 @@ function rmsOf(buf: Uint8Array): number {
  * 핸즈프리: 말하면 자동 녹음 → 침묵 감지 시 STT → onUtterance(텍스트) → 환자 응답+TTS → 다시 듣기.
  * 환자 TTS가 재생되는 동안은 듣기를 멈춰 에코를 방지한다.
  */
-export function useVoice(caseId?: string, moodId?: string) {
+export function useVoice(
+  caseId?: string,
+  moodId?: string,
+  caseData?: unknown // 업로드된 커스텀 증례(PatientCase). 있으면 TTS에 함께 보냄.
+) {
   const [status, setStatus] = useState<VoiceStatus>("idle");
   const [error, setError] = useState<string | null>(null);
   const levelRef = useRef(0);
@@ -38,6 +42,8 @@ export function useVoice(caseId?: string, moodId?: string) {
   caseIdRef.current = caseId;
   const moodIdRef = useRef(moodId);
   moodIdRef.current = moodId;
+  const caseDataRef = useRef(caseData);
+  caseDataRef.current = caseData;
 
   const streamRef = useRef<MediaStream | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -99,7 +105,12 @@ export function useVoice(caseId?: string, moodId?: string) {
       const r = await fetch("/api/tts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, caseId: caseIdRef.current, moodId: moodIdRef.current }),
+        body: JSON.stringify({
+          text,
+          caseId: caseIdRef.current,
+          moodId: moodIdRef.current,
+          caseData: caseDataRef.current,
+        }),
       });
       if (!r.ok) return;
       const arr = await r.arrayBuffer();

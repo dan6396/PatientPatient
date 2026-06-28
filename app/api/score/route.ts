@@ -2,7 +2,8 @@ import { generateText } from "ai";
 import { scoringModel, patientModel } from "@/backend/models";
 import { buildScoringPrompt, flattenTeaching, type TranscriptTurn } from "@/backend/scoring/prompt";
 import { parseScoreResponse } from "@/backend/scoring/parse";
-import { getCase, getExamRubric } from "@/backend/cases";
+import { getExamRubric } from "@/backend/cases";
+import { resolveCase } from "@/backend/cases/resolve";
 import type {
   ScoredItem,
   CategoryScore,
@@ -12,6 +13,7 @@ import type {
   CaseExamRubric,
   ExamScoreResult,
   ExamScoreItem,
+  PatientCase,
 } from "@/backend/cases/case-types";
 
 export const runtime = "nodejs";
@@ -168,11 +170,12 @@ async function buildExamScore(
 
 export async function POST(req: Request) {
   try {
-    const { transcript: rawTranscript, caseId, performedParts, examMessages } = (await req.json()) as {
+    const { transcript: rawTranscript, caseId, performedParts, examMessages, caseData } = (await req.json()) as {
       transcript?: TranscriptTurn[];
       caseId?: string;
       performedParts?: string[];
       examMessages?: ExamMessage[];
+      caseData?: PatientCase;
     };
 
     // 문진이 비어 있어도(의사 먼저 시작 구조) 막지 않고 graceful 채점한다.
@@ -182,7 +185,7 @@ export async function POST(req: Request) {
       return Response.json({ error: "채점할 면담 내용이 없습니다." }, { status: 400 });
     }
 
-    const activeCase = getCase(caseId);
+    const activeCase = resolveCase(caseId, caseData);
     const rubric = activeCase.rubric;
     const doctorTurns = transcript.filter(
       (t) => t.role === "doctor" && t.content.trim().length > 0

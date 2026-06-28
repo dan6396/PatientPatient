@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { getCase } from "@/backend/cases";
+import type { PatientCase } from "@/backend/cases/case-types";
 import { useVoice, type VoiceStatus } from "../hooks/useVoice";
 import VoiceVisualizer from "./VoiceVisualizer";
 
@@ -30,6 +31,7 @@ export default function Chat({
   onExit,
   finishLabel = "면담 종료",
   phaseLabel,
+  caseData,
 }: {
   caseId: string;
   moodId: string;
@@ -39,8 +41,9 @@ export default function Chat({
   onExit: () => void;
   finishLabel?: string; // 진행 버튼 문구(단계별로 다름)
   phaseLabel?: string; // 헤더에 붙는 단계 이름(예: "환자교육")
+  caseData?: PatientCase; // 업로드된 커스텀 증례(있으면 caseId 대신 사용)
 }) {
-  const activeCase = getCase(caseId);
+  const activeCase = caseData ?? getCase(caseId);
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
   const [seconds, setSeconds] = useState(0);
@@ -50,7 +53,7 @@ export default function Chat({
   const [error, setError] = useState<string | null>(null);
 
   const scrollRef = useRef<HTMLDivElement>(null);
-  const voice = useVoice(caseId, moodId);
+  const voice = useVoice(caseId, moodId, caseData);
 
   useEffect(() => {
     const t = setInterval(() => setSeconds((s) => s + 1), 1000);
@@ -80,7 +83,7 @@ export default function Chat({
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: apiMessages, caseId, moodId }),
+        body: JSON.stringify({ messages: apiMessages, caseId, moodId, caseData }),
       });
       if (!res.ok || !res.body) throw new Error("chat failed");
 

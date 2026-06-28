@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { getMood, randomMoodId } from "@/backend/cases/moods";
-import type { ScoreResponse, ExamMessage } from "@/backend/cases/case-types";
+import type { ScoreResponse, ExamMessage, PatientCase } from "@/backend/cases/case-types";
 import Chat, { type Turn } from "./Chat";
 import PhysicalExam from "./PhysicalExam";
 import ScoreReport from "./ScoreReport";
@@ -13,9 +13,11 @@ type ExamData = { performedParts: string[]; examMessages: ExamMessage[] };
 export default function Encounter({
   caseId,
   onExit,
+  caseData,
 }: {
   caseId: string;
   onExit: () => void;
+  caseData?: PatientCase; // 업로드된 커스텀 증례(있으면 caseId 대신 사용)
 }) {
   const [phase, setPhase] = useState<Phase>("history");
   const [moodId] = useState(() => randomMoodId()); // 매 면담마다 랜덤 감정 상태
@@ -25,9 +27,12 @@ export default function Encounter({
   const [examData, setExamData] = useState<ExamData | null>(null);
   const [report, setReport] = useState<ScoreResponse | null>(null);
 
-  // 문진 종료 → 신체진찰
+  // 커스텀(업로드) 증례는 신체진찰 데이터가 없으므로 신체진찰 단계를 건너뛴다.
+  const hasExam = !caseData;
+
+  // 문진 종료 → (정적 증례)신체진찰 / (커스텀)바로 환자교육
   function finishHistory() {
-    setPhase("exam");
+    setPhase(hasExam ? "exam" : "education");
   }
 
   // 신체진찰 종료 → 환자교육(대화 계속) — 신체진찰 결과는 보관해뒀다가 채점에 사용
@@ -47,6 +52,7 @@ export default function Encounter({
         body: JSON.stringify({
           transcript,
           caseId,
+          caseData,
           performedParts: examData?.performedParts ?? [],
           examMessages: examData?.examMessages ?? [],
         }),
@@ -77,7 +83,8 @@ export default function Encounter({
         setTurns={setTurns}
         onFinishHistory={finishHistory}
         onExit={onExit}
-        finishLabel="신체진찰로 넘어가기"
+        finishLabel={hasExam ? "신체진찰로 넘어가기" : "환자교육으로 넘어가기"}
+        caseData={caseData}
       />
     );
   }
@@ -98,6 +105,7 @@ export default function Encounter({
         onExit={onExit}
         finishLabel="채점하기"
         phaseLabel="환자교육"
+        caseData={caseData}
       />
     );
   }
