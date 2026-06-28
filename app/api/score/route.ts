@@ -193,6 +193,7 @@ export async function POST(req: Request) {
     let covered: string[] = [];
     let studentImpression = "";
     let impressionCorrect = false;
+    let turnComments: { i: number; comment: string }[] = [];
 
     if (doctorTurns.length === 0) {
       items = rubric.map((r) => scoreItem(r, r.levels.length - 1, "의사가 묻거나 수행하지 않음."));
@@ -206,6 +207,7 @@ export async function POST(req: Request) {
         prompt,
       });
       const parsed = parseScoreResponse(text);
+      turnComments = parsed.turnComments;
       summary = parsed.summary;
       covered = parsed.covered;
       studentImpression = parsed.studentImpression;
@@ -271,6 +273,7 @@ export async function POST(req: Request) {
       teaching,
       examScore,
       combinedScore,
+      turnComments,
     });
   } catch (err) {
     console.error("[/api/score]", err);

@@ -158,7 +158,13 @@ export function useVoice(caseId?: string, moodId?: string) {
     async (onUtterance: (text: string) => Promise<void>) => {
       setError(null);
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true, // 스피커 소리 되먹임 제거
+            noiseSuppression: true, // 배경 잡음 억제
+            autoGainControl: true, // 작은 목소리 자동 증폭 → 일정한 볼륨
+          },
+        });
         streamRef.current = stream;
         const ctx = ensureCtx();
         await ctx.resume();
@@ -173,10 +179,21 @@ export function useVoice(caseId?: string, moodId?: string) {
         handsFreeRef.current = true;
         setStatus("listening");
 
-        const THRESH = 0.065; // 잡음에 의한 오인식 시작을 줄이기 위해 상향
-        const SILENCE_MS = 1100;
-        const MIN_UTTER_MS = 700; // 너무 짧은(=잡음일 확률 높은) 발화는 거름
-        const PEAK_SPEECH_THRESH = THRESH * 1.6; // 녹음 내내 잡음 수준만 있었으면 실제 발화로 보지 않음
+        // 적응형 임계값 — 주변 소음(noise floor)에 맞춰 자동 조정한다.
+        const MIN_THRESH = 0.03; // 하한(너무 민감해지지 않게)
+        const GAIN = 2.2; // 소음 대비 이 배수를 넘으면 '발화'로 본다
+        const PEAK_MULT = 1.35; // 녹음 피크가 thresh*이 배수는 넘어야 실제 발화로 인정
+        const SILENCE_MS = 700; // 말 끝 판단 대기(응답 속도↑). 너무 줄이면 말 중간 끊김
+        const MIN_UTTER_MS = 600;
+        const CALIB_MS = 400; // 시작 직후 주변 소음 측정 구간
+
+        let noiseFloor = 0;
+        let calibrated = false;
+        let calibStart = 0;
+        let calibSum = 0;
+        let calibN = 0;
+        let thresh = MIN_THRESH;
+        let peakThresh = MIN_THRESH * PEAK_MULT;
 
         let state: "listening" | "recording" = "listening";
         let recorder: MediaRecorder | null = null;
@@ -204,10 +221,25 @@ export function useVoice(caseId?: string, moodId?: string) {
 
           // TTS 재생/처리 중에는 듣지 않음(에코 방지). 레벨도 speak가 구동.
           if (!busy && !ttsActiveRef.current) {
-            levelRef.current += (Math.min(1, rms * 3.2) - levelRef.current) * 0.3;
+            if (!calibrated) {
+              // 시작 직후 주변 소음을 측정해 임계값을 환경에 맞게 설정
+              if (calibStart === 0) calibStart = now;
+              calibSum += rms;
+              calibN += 1;
+              if (now - calibStart >= CALIB_MS) {
+                noiseFloor = calibN ? calibSum / calibN : 0;
+                thresh = Math.max(MIN_THRESH, noiseFloor * GAIN);
+                peakThresh = thresh * PEAK_MULT;
+                calibrated = true;
+              }
+            } else if (state === "listening") {
+              levelRef.current += (Math.min(1, rms * 3.2) - levelRef.current) * 0.3;
+              // 조용할 때 소음 추정치를 천천히 갱신 → 환경 변화에 적응
+              noiseFloor += (rms - noiseFloor) * 0.02;
+              thresh = Math.max(MIN_THRESH, noiseFloor * GAIN);
+              peakThresh = thresh * PEAK_MULT;
 
-            if (state === "listening") {
-              if (rms > THRESH) {
+              if (rms > thresh) {
                 state = "recording";
                 chunksRef.current = [];
                 speechStart = now;
@@ -223,8 +255,9 @@ export function useVoice(caseId?: string, moodId?: string) {
                 setStatus("recording");
               }
             } else if (state === "recording") {
+              levelRef.current += (Math.min(1, rms * 3.2) - levelRef.current) * 0.3;
               if (rms > peakRms) peakRms = rms;
-              if (rms > THRESH) {
+              if (rms > thresh) {
                 silenceStart = 0;
               } else if (!silenceStart) {
                 silenceStart = now;
@@ -237,8 +270,8 @@ export function useVoice(caseId?: string, moodId?: string) {
                 setStatus("transcribing");
                 const blob = rec ? await stopRec(rec) : new Blob();
                 levelRef.current = 0;
-                // 충분히 길고, 잡음 수준을 넘어서는 실제 발화 피크가 있었을 때만 STT 호출
-                if (dur >= MIN_UTTER_MS && peakRms >= PEAK_SPEECH_THRESH) {
+                // 충분히 길고, 소음 수준을 넘어서는 실제 발화 피크가 있었을 때만 STT 호출
+                if (dur >= MIN_UTTER_MS && peakRms >= peakThresh) {
                   const text = await transcribe(blob, mimeInfo.ext);
                   if (text && handsFreeRef.current) {
                     await onUtterance(text); // 전송 + 환자 응답 + TTS

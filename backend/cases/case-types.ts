@@ -70,9 +70,6 @@ export type PatientCase = {
   hiddenDiagnosis: string;
   rubric: RubricItem[];
   teaching?: Teaching; // 교육 피드백 카드(모범답안)
-  // 의사가 면담 끝에 "더 궁금한 점 있으세요?"라고 물었을 때만,
-  // 이 중 대화에서 안 다뤄진 것 최대 2개를 환자가 묻는다(돌발질문).
-  closingQuestions?: string[];
   physicalExam?: ExamManeuver[]; // (미사용) 신체진찰 술기 보기
 };
 
@@ -145,6 +142,9 @@ export type ExamScoreResult = {
   items: ExamScoreItem[];
 };
 
+// 대화 내역의 특정 의사 발화에 다는 짧은 코칭 코멘트(아쉬웠던 곳만)
+export type TurnComment = { i: number; comment: string };
+
 export type ScoreResponse = {
   items: ScoredItem[];
   categories: CategoryScore[];
@@ -155,4 +155,5 @@ export type ScoreResponse = {
   teaching?: TeachingFeedback;
   examScore?: ExamScoreResult;
   combinedScore?: number; // INTERVIEW_WEIGHT * 문진% + EXAM_WEIGHT * examScore.totalScore
+  turnComments?: TurnComment[]; // 대화 내역 의사 발화별 짧은 코멘트
 };

@@ -1,12 +1,14 @@
 // 채점 LLM 응답을 안전하게 JSON으로 파싱한다.
 
 export type RawScore = { id: string; level: number; evidence: string };
+export type TurnComment = { i: number; comment: string };
 export type ParsedScore = {
   items: RawScore[];
   summary: string;
   studentImpression: string;
   impressionCorrect: boolean;
   covered: string[];
+  turnComments: TurnComment[];
 };
 
 export function parseScoreResponse(raw: string): ParsedScore {
@@ -32,6 +34,7 @@ export function parseScoreResponse(raw: string): ParsedScore {
     studentImpression?: unknown;
     impressionCorrect?: unknown;
     covered?: unknown;
+    turnComments?: unknown;
   };
 
   const items: RawScore[] = (Array.isArray(obj.items) ? obj.items : [])
@@ -54,6 +57,16 @@ export function parseScoreResponse(raw: string): ParsedScore {
         .filter((c): c is string => c !== null)
     : [];
 
+  const turnComments: TurnComment[] = (Array.isArray(obj.turnComments) ? obj.turnComments : [])
+    .map((c) => {
+      const o = c as Record<string, unknown>;
+      const i = Number(o.i);
+      return Number.isFinite(i) && typeof o.comment === "string" && o.comment.trim()
+        ? { i: Math.round(i), comment: o.comment.trim() }
+        : null;
+    })
+    .filter((x): x is TurnComment => x !== null);
+
   return {
     items,
     summary: typeof obj.summary === "string" ? obj.summary : "",
@@ -61,5 +74,6 @@ export function parseScoreResponse(raw: string): ParsedScore {
       typeof obj.studentImpression === "string" ? obj.studentImpression : "",
     impressionCorrect: obj.impressionCorrect === true,
     covered,
+    turnComments,
   };
 }

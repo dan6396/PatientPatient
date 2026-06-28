@@ -70,6 +70,10 @@ export default function ScoreReport({
 
   const hasExam = Boolean(report.examScore);
 
+  // 대화 내역(빈 발화 제외) + 의사 발화별 코멘트 매핑 — 인덱스는 채점 LLM이 본 것과 동일.
+  const shownTurns = transcript.filter((t) => t.content.trim());
+  const commentByIdx = new Map((report.turnComments ?? []).map((c) => [c.i, c.comment]));
+
   return (
     <div className="mx-auto w-full max-w-5xl lg:flex lg:items-start lg:gap-8">
       {/* 대화 내역 */}
@@ -78,20 +82,33 @@ export default function ScoreReport({
           대화 내역
         </h3>
         <div className="max-h-[38vh] space-y-2 overflow-y-auto rounded-xl border border-ink/10 bg-[var(--bg)]/40 p-3 lg:max-h-[82vh]">
-          {transcript.filter((t) => t.content.trim()).map((t, i) => (
-            <div key={i} className={`flex ${t.role === "doctor" ? "justify-end" : "justify-start"}`}>
+          {shownTurns.map((t, i) => {
+            const comment = t.role === "doctor" ? commentByIdx.get(i) : undefined;
+            return (
               <div
-                className={`max-w-[85%] rounded-2xl px-3 py-2 text-[13px] leading-relaxed ${
-                  t.role === "doctor"
-                    ? "bg-ink text-[var(--bg)]"
-                    : "border border-ink/10 bg-[var(--bg)]/70 text-ink"
+                key={i}
+                className={`flex flex-col gap-0.5 ${
+                  t.role === "doctor" ? "items-end" : "items-start"
                 }`}
               >
-                {t.content}
+                <div
+                  className={`max-w-[85%] rounded-2xl px-3 py-2 text-[13px] leading-relaxed ${
+                    t.role === "doctor"
+                      ? "bg-ink text-[var(--bg)]"
+                      : "border border-ink/10 bg-[var(--bg)]/70 text-ink"
+                  }`}
+                >
+                  {t.content}
+                </div>
+                {comment && (
+                  <p className="max-w-[85%] text-[11px] leading-snug text-amber-700">
+                    ↳ {comment}
+                  </p>
+                )}
               </div>
-            </div>
-          ))}
-          {transcript.filter((t) => t.content.trim()).length === 0 && (
+            );
+          })}
+          {shownTurns.length === 0 && (
             <p className="py-4 text-center text-xs text-ink-soft/70">대화 내역이 없습니다.</p>
           )}
         </div>
