@@ -104,6 +104,20 @@ export type CaseExamFinding = {
   finding: string;
   animationKey: string;
   variants?: Record<string, { finding: string; animationKey: string }>;
+  // 관절 진찰 부위별 소견. affectedRegions에 든 부위(canonical key)만 양성,
+  // 그 외 부위를 진찰하면 normalFinding을 반환한다. 없으면 부위와 무관하게 finding 사용.
+  affectedRegions?: string[];
+  normalFinding?: string;
+  // 부위별로 다른 양성 소견 텍스트. 키=region(손가락/손목 등). 있으면 그 부위 진찰 시
+  // 이 항목을 우선 사용한다(부위별 subtype 변형도 가능).
+  byRegion?: Record<
+    string,
+    {
+      finding: string;
+      animationKey: string;
+      variants?: Record<string, { finding: string; animationKey: string }>;
+    }
+  >;
 };
 
 export type CaseExamData = {

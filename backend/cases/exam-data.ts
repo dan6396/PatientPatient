@@ -206,18 +206,20 @@ const rheumatoidExamData: CaseExamData = {
       partId: "joint_inspection",
       label: "관절 시진",
       finding:
-        "양손 MCP·PIP 관절의 대칭적인 부종이 관찰됩니다. 발적·결절·변형은 뚜렷하지 않습니다. 하지 관절은 특이 소견 없습니다.",
+        "양손 MCP·PIP 관절의 대칭적인 부종이 관찰됩니다. 발적·결절·변형은 뚜렷하지 않습니다.",
       animationKey: "anim_joint_inspection",
-      variants: {
-        상지: {
+      affectedRegions: ["손가락", "손목"],
+      normalFinding: "해당 부위 관절의 부종·발적·변형·결절은 관찰되지 않습니다.",
+      byRegion: {
+        손가락: {
           finding:
-            "양손 MCP·PIP 관절의 대칭적 부종이 보입니다. 발적·결절 없음.",
-          animationKey: "anim_joint_inspection_upper",
+            "양손 손가락 MCP·PIP 관절의 대칭적 부종이 관찰됩니다. 발적·결절·변형은 없습니다.",
+          animationKey: "anim_joint_inspection_finger",
         },
-        하지: {
+        손목: {
           finding:
-            "무릎·발목·발가락 관절 부종·변형 없습니다.",
-          animationKey: "anim_joint_inspection_lower",
+            "양 손목 관절의 경한 부종이 관찰됩니다. 발적·변형은 뚜렷하지 않습니다.",
+          animationKey: "anim_joint_inspection_wrist",
         },
       },
     },
@@ -227,16 +229,38 @@ const rheumatoidExamData: CaseExamData = {
       finding:
         "양손 MCP·PIP 관절에 압통이 있으며 경한 이개가 느껴집니다.",
       animationKey: "anim_joint_palpation",
-      variants: {
-        이개: {
+      affectedRegions: ["손가락", "손목"],
+      normalFinding: "해당 부위 관절에 압통·열감은 없습니다.",
+      byRegion: {
+        손가락: {
           finding:
-            "양손 MCP·PIP 관절에 경한 이개가 만져집니다.",
-          animationKey: "anim_joint_palpation_heat",
+            "양손 손가락 MCP·PIP 관절에 압통이 있으며 경한 이개(열감)가 느껴집니다.",
+          animationKey: "anim_joint_palpation_finger",
+          variants: {
+            이개: {
+              finding: "양손 손가락 MCP·PIP 관절에 경한 이개(열감)가 만져집니다.",
+              animationKey: "anim_joint_palpation_finger_heat",
+            },
+            압통: {
+              finding: "양손 손가락 MCP·PIP 관절에 압통이 있습니다.",
+              animationKey: "anim_joint_palpation_finger_tender",
+            },
+          },
         },
-        압통: {
+        손목: {
           finding:
-            "양손 MCP·PIP 관절에 압통이 있습니다. 손목도 가벼운 압통.",
-          animationKey: "anim_joint_palpation_tender",
+            "양 손목 관절에 경한 압통이 있습니다. 이개는 뚜렷하지 않습니다.",
+          animationKey: "anim_joint_palpation_wrist",
+          variants: {
+            이개: {
+              finding: "양 손목 관절에 뚜렷한 이개는 없습니다.",
+              animationKey: "anim_joint_palpation_wrist_heat",
+            },
+            압통: {
+              finding: "양 손목 관절에 경한 압통이 있습니다.",
+              animationKey: "anim_joint_palpation_wrist_tender",
+            },
+          },
         },
       },
     },
@@ -246,16 +270,39 @@ const rheumatoidExamData: CaseExamData = {
       finding:
         "능동·수동 이동 모두 손가락 굴곡 시 경한 제한과 통증이 있습니다. 손목 굴신은 비교적 유지됩니다.",
       animationKey: "anim_joint_rom",
-      variants: {
-        능동: {
+      affectedRegions: ["손가락", "손목"],
+      normalFinding: "해당 부위 관절의 능동·수동 운동범위는 정상이며 통증·제한 없습니다.",
+      byRegion: {
+        손가락: {
           finding:
-            "능동 이동 시 손가락 굴곡에서 통증·경한 제한이 있습니다.",
-          animationKey: "anim_joint_rom_active",
+            "손가락 굴곡 시 능동·수동 이동 모두 경한 제한과 통증이 있습니다.",
+          animationKey: "anim_joint_rom_finger",
+          variants: {
+            능동: {
+              finding: "능동 굴곡 시 손가락에서 통증·경한 제한이 있습니다.",
+              animationKey: "anim_joint_rom_finger_active",
+            },
+            수동: {
+              finding:
+                "수동 굴곡에서도 손가락 제한이 있습니다(관절 자체 병변 시사).",
+              animationKey: "anim_joint_rom_finger_passive",
+            },
+          },
         },
-        수동: {
+        손목: {
           finding:
-            "수동 이동에서도 동일하게 손가락 굴곡 제한이 있습니다(관절 자체 병변 시사).",
-          animationKey: "anim_joint_rom_passive",
+            "손목 굴신은 비교적 유지되나 끝범위에서 경한 통증이 있습니다.",
+          animationKey: "anim_joint_rom_wrist",
+          variants: {
+            능동: {
+              finding: "능동 손목 굴신 끝범위에서 경한 통증이 있습니다.",
+              animationKey: "anim_joint_rom_wrist_active",
+            },
+            수동: {
+              finding: "수동 손목 굴신은 범위가 유지되며 통증은 경합니다.",
+              animationKey: "anim_joint_rom_wrist_passive",
+            },
+          },
         },
       },
     },

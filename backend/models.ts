@@ -15,6 +15,10 @@ export const SCORING_MODEL_ID = process.env.SCORING_MODEL ?? "gpt-5.5";
 export const patientModel = openai(PATIENT_MODEL_ID);
 export const scoringModel = openai(SCORING_MODEL_ID);
 
+// 신체진찰 라우팅용 임베딩 모델(의미 유사도 기반 파트 분류).
+export const EMBEDDING_MODEL_ID = process.env.EMBEDDING_MODEL ?? "text-embedding-3-small";
+export const embeddingModel = openai.embedding(EMBEDDING_MODEL_ID);
+
 // ── 음성(STT/TTS) — 채팅 LLM과 무관하게 오디오는 OpenAI 사용 ──
 // 키는 기존 OPENAI_API_KEY 재사용. 환경변수로 교체 가능.
 // gpt-4o-transcribe: whisper-1보다 한국어 정확도가 높고 환각이 크게 적다(엉뚱한 인식 방지).
