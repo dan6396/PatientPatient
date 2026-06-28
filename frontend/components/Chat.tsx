@@ -148,8 +148,7 @@ export default function Chat({
 
   async function startConversation() {
     setConversing(true);
-    const opening = [...turns].reverse().find((t) => t.role === "patient")?.content;
-    if (opening) await voice.speak(opening); // 환자 첫 마디
+    // 의사(사용자)가 먼저 말한다 — 이전(문진) 단계의 마지막 환자 답변을 다시 읊지 않는다.
     await voice.startHandsFree((t) => utterRef.current(t));
   }
   function stopConversation() {
@@ -173,8 +172,16 @@ export default function Chat({
     onFinishHistory();
   }
 
-  const lastDoctor = [...turns].reverse().find((t) => t.role === "doctor")?.content ?? "";
-  const lastPatient = [...turns].reverse().find((t) => t.role === "patient")?.content ?? "";
+  // 이 단계(Chat 인스턴스) 진입 시점의 대화 길이 — 이전 단계(문진) 내용은 표시/낭독하지 않는다.
+  const baseLen = useRef(turns.length);
+  const hasNew = turns.length > baseLen.current;
+
+  const lastDoctor = hasNew
+    ? [...turns].reverse().find((t) => t.role === "doctor")?.content ?? ""
+    : "";
+  const lastPatient = hasNew
+    ? [...turns].reverse().find((t) => t.role === "patient")?.content ?? ""
+    : "";
 
   return (
     <div className="mx-auto flex h-[100dvh] max-w-2xl flex-col">
@@ -209,7 +216,11 @@ export default function Chat({
           <div className="flex flex-1 flex-col items-center justify-center gap-6 px-6 text-center">
             <VoiceVisualizer levelRef={voice.levelRef} status={voice.status} size={320} />
             <p className="text-sm tracking-wide text-ink-soft">
-              {voicePreparing ? "환자가 답하는 중…" : STATUS_LABEL[voice.status]}
+              {voicePreparing
+                ? "환자가 답하는 중…"
+                : !hasNew && phaseLabel
+                ? `${phaseLabel}을 진행하세요 · 환자에게 설명해 주세요`
+                : STATUS_LABEL[voice.status]}
             </p>
             <div className="min-h-[3.5rem] max-w-md space-y-1">
               {lastDoctor && <p className="text-xs text-ink-soft/70">나: {lastDoctor}</p>}

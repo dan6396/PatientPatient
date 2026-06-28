@@ -152,9 +152,9 @@ export default function ScoreReport({
             <div className="mb-3 flex items-center justify-between">
               <h3 className="font-display text-xl text-ink">교육 피드백</h3>
               <span className="text-xs">
-                <span className="text-emerald-700">초록 ✓ = 다룬 항목</span>
+                <span className="text-ink">✓ = 다룬 항목</span>
                 <span className="text-ink-soft"> · </span>
-                <span className="text-red-600">빨강 = 놓친 항목</span>
+                <span className="text-red-600">✕ = 놓친 항목</span>
               </span>
             </div>
 
@@ -171,7 +171,18 @@ export default function ScoreReport({
             </div>
 
             {report.summary && (
-              <p className="mb-4 text-sm leading-relaxed text-ink-soft">{report.summary}</p>
+              <ul className="mb-4 space-y-1.5">
+                {report.summary
+                  .split("\n")
+                  .map((l) => l.replace(/^\s*[-•·]\s*/, "").trim())
+                  .filter(Boolean)
+                  .map((line, i) => (
+                    <li key={i} className="flex gap-2 text-sm leading-relaxed text-ink-soft">
+                      <span className="mt-px shrink-0 text-ink-soft/50">•</span>
+                      <span>{line}</span>
+                    </li>
+                  ))}
+              </ul>
             )}
 
             <div className="space-y-3">
@@ -185,11 +196,11 @@ export default function ScoreReport({
                       <li
                         key={i}
                         className={`flex items-start gap-1.5 text-sm leading-relaxed ${
-                          it.covered ? "text-emerald-700" : "font-medium text-red-600"
+                          it.covered ? "text-ink" : "font-medium text-red-600"
                         }`}
                       >
                         <span className="mt-px shrink-0 font-bold">
-                          {it.covered ? "✓" : "·"}
+                          {it.covered ? "✓" : "✕"}
                         </span>
                         <span>{it.text}</span>
                       </li>
