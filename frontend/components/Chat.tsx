@@ -28,6 +28,8 @@ export default function Chat({
   setTurns,
   onFinishHistory,
   onExit,
+  finishLabel = "면담 종료",
+  phaseLabel,
 }: {
   caseId: string;
   moodId: string;
@@ -35,6 +37,8 @@ export default function Chat({
   setTurns: React.Dispatch<React.SetStateAction<Turn[]>>;
   onFinishHistory: () => void;
   onExit: () => void;
+  finishLabel?: string; // 진행 버튼 문구(단계별로 다름)
+  phaseLabel?: string; // 헤더에 붙는 단계 이름(예: "환자교육")
 }) {
   const activeCase = getCase(caseId);
   const [input, setInput] = useState("");
@@ -183,7 +187,10 @@ export default function Chat({
           >
             ← 증례
           </button>
-          <h1 className="truncate font-display text-xl text-ink">{activeCase.title}</h1>
+          <h1 className="truncate font-display text-xl text-ink">
+            {activeCase.title}
+            {phaseLabel && <span className="text-ink-soft"> · {phaseLabel}</span>}
+          </h1>
         </div>
         <div className="flex items-center gap-4">
           <span className="font-display text-lg tabular-nums text-ink">{fmtTime(seconds)}</span>
@@ -192,7 +199,7 @@ export default function Chat({
             disabled={streaming}
             className="rounded-full bg-ink px-4 py-2 text-sm font-medium text-[var(--bg)] transition-opacity disabled:opacity-50"
           >
-            면담 종료
+            {finishLabel}
           </button>
         </div>
       </div>

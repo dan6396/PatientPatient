@@ -70,6 +70,9 @@ export type PatientCase = {
   hiddenDiagnosis: string;
   rubric: RubricItem[];
   teaching?: Teaching; // 교육 피드백 카드(모범답안)
+  // 의사가 면담 끝에 "더 궁금한 점 있으세요?"라고 물었을 때만,
+  // 이 중 대화에서 안 다뤄진 것 최대 2개를 환자가 묻는다(돌발질문).
+  closingQuestions?: string[];
   physicalExam?: ExamManeuver[]; // (미사용) 신체진찰 술기 보기
 };
 

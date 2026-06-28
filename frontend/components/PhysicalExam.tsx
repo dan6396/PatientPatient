@@ -37,7 +37,7 @@ export default function PhysicalExam({
   const [examMessages, setExamMessages] = useState<ExamMessage[]>([]);
   const [latestAnimKey, setLatestAnimKey] = useState<string | null>(null);
   const [latestFinding, setLatestFinding] = useState<string | null>(null);
-  const [voiceOn, setVoiceOn] = useState(false);
+  const [voiceOn, setVoiceOn] = useState(true); // 기본은 음성 진찰(아래에서 텍스트로 전환 가능)
   const [conversing, setConversing] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -167,7 +167,7 @@ export default function PhysicalExam({
           disabled={loading}
           className="rounded-full bg-ink px-4 py-2 text-sm font-medium text-[var(--bg)] transition-opacity disabled:opacity-50"
         >
-          진찰 종료 → 채점
+          환자교육으로 넘어가기
         </button>
       </div>
 
@@ -194,7 +194,7 @@ export default function PhysicalExam({
         {/* 음성 모드일 때만: 컴팩트 비주얼라이저 바 */}
         {voiceOn && (
           <div className="flex h-16 shrink-0 items-center gap-3 border-b border-ink/10 px-5">
-            <VoiceVisualizer levelRef={voice.levelRef} status={voice.status} size={48} />
+            <VoiceVisualizer levelRef={voice.levelRef} status={voice.status} size={56} />
             <div className="min-w-0 flex-1">
               <p className="text-[11px] text-ink-soft">{STATUS_LABEL[voice.status]}</p>
               {latestFinding && (
@@ -268,7 +268,7 @@ export default function PhysicalExam({
                 onClick={startConversation}
                 className="rounded-full bg-ink px-5 py-2 text-sm font-medium text-[var(--bg)] transition-transform hover:-translate-y-0.5"
               >
-                ● 재개
+                ● 진찰 시작
               </button>
             )}
             <button

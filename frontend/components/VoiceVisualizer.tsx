@@ -49,8 +49,13 @@ export default function VoiceVisualizer({
     const cx = S / 2;
     const cy = S / 2;
     const R = S * 0.32;
+    // 크기 비례 계수 — 작은 사이즈에서도 큰 오브와 같은 밀도·움직임이 되도록.
+    const k = S / 320;
+    // 작은 오브는 입자를 더 촘촘히 + home(원형)에 강하게 붙여 외곽을 정확한 원으로 유지.
+    const spring = 0.07 + Math.max(0, 1 - k) * 0.22;
 
-    const COUNT = 720;
+    // 입자 수: 면적 비례 + 작은 사이즈는 가장자리가 매끈하도록 넉넉한 최소치 보장.
+    const COUNT = Math.max(180, Math.round(720 * k * k));
     const golden = Math.PI * (3 - Math.sqrt(5));
     const ps: P[] = Array.from({ length: COUNT }, (_, i) => {
       const hr = R * Math.sqrt((i + 0.5) / COUNT);
@@ -62,7 +67,7 @@ export default function VoiceVisualizer({
         y: Math.sin(ha) * hr,
         vx: 0,
         vy: 0,
-        sz: Math.random() * 1.2 + 0.9,
+        sz: (Math.random() * 1.2 + 0.9) * Math.max(0.7, k),
         seed: Math.random() * 1000,
       };
     });
@@ -103,19 +108,30 @@ export default function VoiceVisualizer({
           Math.sin(p.x * 0.04 + t * 0.95 + p.seed) +
           Math.cos(p.y * 0.028 + t * 0.9 + p.seed * 0.5);
 
-        // home 복귀 스프링 (강해서 덜 떠돈다)
-        const sx = (hx - p.x) * 0.07;
-        const sy = (hy - p.y) * 0.07;
+        // home 복귀 스프링 (작은 오브일수록 강해 원형을 유지)
+        const sx = (hx - p.x) * spring;
+        const sy = (hy - p.y) * spring;
 
-        // 진폭 → 바깥으로 burst
+        // 진폭 → 바깥으로 burst (크기 비례)
         const dist = Math.hypot(p.x, p.y) || 1;
-        const bx = (p.x / dist) * lvl * 1.0;
-        const by = (p.y / dist) * lvl * 1.0;
+        const bx = (p.x / dist) * lvl * 1.0 * k;
+        const by = (p.y / dist) * lvl * 1.0 * k;
 
-        p.vx = (p.vx + fx * flowK * 0.06 * energy + sx + bx) * 0.85;
-        p.vy = (p.vy + fy * flowK * 0.06 * energy + sy + by) * 0.85;
+        // 난류 흐름도 크기 비례(작은 오브에서 과하게 튀지 않게)
+        p.vx = (p.vx + fx * flowK * 0.06 * energy * k + sx + bx) * 0.85;
+        p.vy = (p.vy + fy * flowK * 0.06 * energy * k + sy + by) * 0.85;
         p.x += p.vx;
         p.y += p.vy;
+
+        // 작은 오브: 원형 경계로 클램프해 외곽을 정확한 원으로 고정
+        if (k < 0.6) {
+          const d = Math.hypot(p.x, p.y);
+          const maxR = R * expand;
+          if (d > maxR) {
+            p.x = (p.x / d) * maxR;
+            p.y = (p.y / d) * maxR;
+          }
+        }
 
         const edge = p.hr / R;
         const alpha = baseAlpha * (0.85 + 0.15 * (1 - edge)) + lvl * 0.1;
@@ -123,10 +139,10 @@ export default function VoiceVisualizer({
         ctx.fillRect(cx + p.x, cy + p.y, p.sz, p.sz);
       }
 
-      // 중심 코어
+      // 중심 코어 (크기 비례 — 작은 오브에서 박스를 꽉 채우지 않게)
       ctx.beginPath();
       ctx.fillStyle = `rgba(22,22,15,${0.7 + lvl * 0.3})`;
-      ctx.arc(cx, cy, 2.5 + lvl * 12, 0, Math.PI * 2);
+      ctx.arc(cx, cy, (2.5 + lvl * 12) * k, 0, Math.PI * 2);
       ctx.fill();
 
       raf = requestAnimationFrame(tick);
