@@ -19,6 +19,11 @@ export const scoringModel = openai(SCORING_MODEL_ID);
 export const EMBEDDING_MODEL_ID = process.env.EMBEDDING_MODEL ?? "text-embedding-3-small";
 export const embeddingModel = openai.embedding(EMBEDDING_MODEL_ID);
 
+// 환자 사실 검색(RAG-gated SP)용 임베딩 모델 — 한국어 동의 표현 해상도가 중요해 large 사용.
+// 골드셋 평가(scripts/rag-eval.ts): small Recall 76% → large 96%(Hit@1 92%, OOD누출 0%).
+export const FACT_EMBEDDING_MODEL_ID = process.env.FACT_EMBEDDING_MODEL ?? "text-embedding-3-large";
+export const factEmbeddingModel = openai.embedding(FACT_EMBEDDING_MODEL_ID);
+
 // ── 음성(STT/TTS) — 채팅 LLM과 무관하게 오디오는 OpenAI 사용 ──
 // 키는 기존 OPENAI_API_KEY 재사용. 환경변수로 교체 가능.
 // gpt-4o-transcribe: whisper-1보다 한국어 정확도가 높고 환각이 크게 적다(엉뚱한 인식 방지).

@@ -1,15 +1,21 @@
 // PatientCase -> 환자(표준화환자) 시스템 프롬프트로 동적 조립.
 // 증례 내용은 전부 인자로 받은 case 객체에서 온다. 여기에 하드코딩하지 않는다.
 
-import type { PatientCase } from "../cases/case-types";
+import type { PatientCase, GatedFact } from "../cases/case-types";
 import type { Mood } from "../cases/moods";
 
-export function buildPatientSystemPrompt(c: PatientCase, mood?: Mood): string {
+export function buildPatientSystemPrompt(
+  c: PatientCase,
+  mood?: Mood,
+  // 이번 발화에 주입할 사실(RAG로 선별된 것). 미지정이면 기존처럼 전체 사실을 쓴다(하위호환).
+  facts?: GatedFact[]
+): string {
   const { persona } = c;
 
-  const gated = c.gatedFacts
-    .map((g) => `- (${g.triggerHint}) → "${g.answer}"`)
-    .join("\n");
+  const factList = facts ?? c.gatedFacts;
+  const gated = factList.length
+    ? factList.map((g) => `- (${g.triggerHint}) → "${g.answer}"`).join("\n")
+    : "- (지금 의사가 물은 것과 관련된 항목이 없다. 묻지 않은 정보는 모른다고 답하거나 \"왜 그건 묻느냐\"고 한다.)";
 
   const moodBlock =
     mood && mood.id !== "calm"
