@@ -16,11 +16,12 @@ import { embed, embedMany } from "ai";
 import { factEmbeddingModel as embeddingModel } from "../models";
 import type { GatedFact } from "../cases/case-types";
 
-// ── 튜닝된 기본 파라미터(scripts/rag-eval.ts 골드셋 스윕 결과 — large 임베딩 기준) ──
-// 결과: Recall 96% · Hit@1 92% · OOD누출 0%
+// ── 튜닝된 기본 파라미터(scripts/rag-eval.ts 골드셋 스윕 — large 임베딩, 3개 증례) ──
+// 3증례(관절/복통/신경, 56문항) 전체 재튜닝 결과: Recall 92.9% · Hit@1 85.7% · OOD누출 0%
+// (단일 증례로만 튜닝하면 다른 증례에서 OOD가 누출돼 과적합 → 여러 증례로 게이트 보정)
 export const FACT_TOP_K = 6; // 최대 주입 개수
-export const FACT_GATE = 0.34; // OOD 게이트: 최고 dense 점수가 이 미만이면 전부 버림(무관 질문)
-export const FACT_THRESHOLD = 0.12; // 게이트 통과 후 top-k 포함 하한(gate가 OOD를 막으니 낮게)
+export const FACT_GATE = 0.41; // OOD 게이트: 최고 dense 점수가 이 미만이면 전부 버림(무관 질문)
+export const FACT_THRESHOLD = 0.22; // 게이트 통과 후 top-k 포함 하한
 export const FACT_ALPHA = 0.7; // 융합 가중: alpha*dense + (1-alpha)*lexical
 
 // 텍스트 단위 임베딩 캐시(triggerHint·answer 둘 다). 같은 텍스트는 증례·세션을 넘어 재사용.
